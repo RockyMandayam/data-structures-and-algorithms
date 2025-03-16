@@ -127,3 +127,15 @@ class Graph:
     
     def __getitem__(self, node: Hashable) -> Iterable[Hashable]:
         return self._neighbors[node]
+    
+    @staticmethod
+    def create_complete_graph(k: int) -> "Graph":
+        """Creates a complete graph with k nodes where each node is an int (k must be non-negative)."""
+        if k < 0:
+            raise ValueError("k must be non-negative.")
+        nodes = tuple(range(k))
+        edges = []
+        for u in range(k):
+            for v in range(u+1, k):
+                edges.append((u,v))
+        return Graph(nodes, edges)
