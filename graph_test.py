@@ -60,11 +60,22 @@ class TestGraph:
             (list, tuple)
         )
     )
-    def test_init(
+    def test_nontrivial_graphs(
         self,
         nodes_iterable_factory: Callable[[dict], Iterable] | None,
         edges_iterable_factory: Callable[[dict], Iterable] | None,
     ) -> None:
+        """Tests __init__, __len__, num_edges, etc. methods for nontrivial graphs.
+
+        Args:
+            nodes_iterable_factory: For each test "case" within this test, it is initialized via a node to node attributes map.
+                A graph can alternatively be initialized via an iterable of nodes. If nodes_iterable_factory is None, the map
+                initializer is used. If nodes_iterable_factory is a callable, nodes_iterable_factory is used to convert the map
+                to an iterable, which is used to initialize the graph. This makes sure to test both code paths.
+            edges_iterable_factory: Just like with nodes, you can initialize edges via an edge attribute map or an iterable. If
+                edges_iterable_factory is None, the map is used. If edges_iterable_factory is a callable, edges_iterable_factory is
+                used to convert the map to an iterable which is used to initialize the graph. This makes sure to test both code paths.
+        """
         ### test with one node
         nodes = {1: {}}
         if nodes_iterable_factory:

@@ -2,7 +2,7 @@ from collections.abc import Iterable, Hashable, Mapping, Iterator
 from typing import Any
 
 class Graph:
-    """Represents an undireccted graph.
+    """Represents an undirected graph.
     
     At first, I was going to have nodes just be ints, but if I later want to have node attributes, that
     becomes annoying. I could create a node class, but I'm going to follow networkx library's approach of just having a node be
@@ -13,10 +13,10 @@ class Graph:
         - No self-loops
     
     Attributes:
-        nodes (Mapping[Hashable, Mapping]): Map from node (a Hashable) to its attributes (a Mapping).
-        neighbors (Mapping[Hashable, set]): Map from node to its neighbors (a set is used for neighbors - no duplicates!)
-        num_edges (int): number of edges
-        name (str): name of graph
+        _nodes (Mapping[Hashable, Mapping]): Map from node (a Hashable) to its attributes (a Mapping).
+        _neighbors (Mapping[Hashable, set]): Map from node to its neighbors (a set is used for neighbors - no duplicates!)
+        _num_edges (int): number of edges
+        _name (str): name of graph
     """
 
     def __init__(
@@ -30,6 +30,7 @@ class Graph:
             nodes = {}
         if edges is None:
             edges = {}
+        
         if None in nodes:
             raise ValueError("None is not a valid node")
         if None in edges:
