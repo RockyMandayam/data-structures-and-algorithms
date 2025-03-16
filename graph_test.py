@@ -187,3 +187,19 @@ class TestGraph:
             g[('a',)]
         with pytest.raises(KeyError):
             g[None]
+    
+    def test_create_complete_graph(self) -> None:
+        with pytest.raises(ValueError):
+            Graph.create_complete_graph(-2)
+        
+        # empty graph
+        g = Graph.create_complete_graph(0)
+        assert len(g) == 0
+        assert g.num_edges() == 0
+
+        # 1, 2, and several nodes
+        for k in (1, 2, 12):
+            g = Graph.create_complete_graph(k)
+            assert len(g) == k
+            # this formula holds for edge cases of 1 and 2 nodes as well
+            assert g.num_edges() == (k-1)*k/2
