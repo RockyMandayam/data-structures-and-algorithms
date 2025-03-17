@@ -1,3 +1,5 @@
+import random
+
 from graphs.graph import Graph
 
 class GraphFactoryTest:
@@ -47,3 +49,51 @@ class GraphFactoryTest:
                         assert g.is_edge(node, other_node)
                     else:
                         assert not g.is_edge(node, other_node)
+    
+    def test_create_b_ary_tree(self) -> None:
+        # invalid b, depth
+        with pytest.raises(ValueError):
+            GraphFactory.create_b_ary_tree(-1, 2)
+        with pytest.raises(ValueError):
+            Graph(2, -1)
+        
+        # depth 0
+        g = GraphFactory.create_b_ary_tree(2, 0)
+        assert len(g) == 1
+
+        # b=1, depth=1
+        g = GraphFactory.create_b_ary_tree(1, 1)
+        assert len(g) == 2
+        assert g.num_edges() == 1
+
+        # b=2, depth=1
+        g = GraphFactory.create_b_ary_tree(2, 1)
+        assert len(g) == 3
+        assert g.num_edges() == 2
+        assert g.is_edge(0, 1)
+        assert g.is_edge(0, 2)
+
+        # b=1, depth=2
+        g = GraphFactory.create_b_ary_tree(1, 2)
+        assert len(g) == 3
+        assert g.num_edges() == 2
+        assert g.is_edge(0, 1)
+        assert g.is_edge(1, 2)
+
+        # b=2, depth=2
+        g = GraphFactory.create_b_ary_tree(2, 2)
+        assert len(g) == 7
+        assert g.num_edges(6)
+        assert g.is_edge(0, 1)
+        assert g.is_edge(0, 2)
+        assert g.is_edge(1, 3)
+        assert g.is_edge(1, 4)
+        assert g.is_edge(2, 5)
+        assert g.is_edge(2, 6)
+
+        # test b and depth chosen at random in arbitrary range
+        for b in (3, random.randint(4, 10)):
+            for depth in (3, random.randint(4, 10)):
+                g = GraphFactory.create_b_ary_tree(b, depth)
+                assert len(g) == (b**(depth+1)-1)/(depth-1)
+                assert g.num_edges() == len(g) - 1
