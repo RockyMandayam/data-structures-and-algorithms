@@ -21,7 +21,7 @@ class Graph:
 
     def __init__(
         self,
-        nodes: Mapping[Hashable, Mapping] | Iterable[Hashable] | None = None,
+        nodes: Mapping[Hashable, Mapping] | Iterable[Hashable] | int | None = None,
         edges: Mapping[tuple[Hashable, Hashable], Mapping] | Iterable[tuple[Hashable, Hashable]] | None = None,
         name: str | None = None,
         skip_duplicate_edges: bool = False
@@ -32,6 +32,13 @@ class Graph:
             edges = {}
         
         if nodes:
+            # if nodes is int, convert to iterable from 0...n-1
+            if isinstance(nodes, int):
+                if nodes < 0:
+                    raise ValueError("Graph must have a non-negative number of nodes.")
+                nodes = range(nodes)
+            # if nodes is Iterable[Hashable], convert to mapping (Mapping is also Iterable, so instead of checking
+            # isinstance of Iterable, check not isinstance of Mapping)
             if not isinstance(nodes, Mapping):
                 # nodes is Iterable[Hashable]; convert to Mapping format
                 # use temp nodes_map name to not override 'nodes' name

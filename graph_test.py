@@ -1,4 +1,5 @@
 from collections.abc import Callable, Mapping, Iterable
+import random
 
 import pytest
 
@@ -35,6 +36,8 @@ class TestGraph:
             Graph(nodes=(None,))
         with pytest.raises(ValueError):
             Graph(nodes=iter((None,)))
+        with pytest.raises(ValueError):
+            Graph(nodes=-1)
         with pytest.raises(ValueError):
             Graph(nodes=(1,), edges={None: {}})
         with pytest.raises(ValueError):
@@ -124,6 +127,13 @@ class TestGraph:
             g[2]
         with pytest.raises(KeyError):
             g[None]
+        
+        ### test when nodes is an int
+        g = Graph(nodes=1)
+        assert len(g) == 1
+        assert g.num_edges() == 0
+        assert 0 in g
+        assert 1 not in g
         
         ### test with one node and self-loop
         edges = {(1,1): {}}
@@ -241,7 +251,8 @@ class TestGraph:
         assert g.num_edges() == 0
 
         # 1, 2, and several nodes
-        for k in (1, 2, 12):
+        # TODO why is this so slow with 2**big_number
+        for k in (1, 2, random.randint(3, 2**8)):
             g = Graph.create_complete_graph(k)
             assert len(g) == k
             # this formula holds for edge cases of 1 and 2 nodes as well
