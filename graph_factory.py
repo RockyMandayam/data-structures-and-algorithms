@@ -1,3 +1,4 @@
+from graphs.graph import Graph
 
 class GraphFactory:
     
