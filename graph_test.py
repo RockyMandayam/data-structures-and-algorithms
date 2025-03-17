@@ -15,6 +15,7 @@ class TestGraph:
         - __iter__
         - __contains__
         - __getitem__
+        - is_edge
     """
     # TODO test node and edge attributes
 
