@@ -25,14 +25,42 @@ class TestGraph:
         assert cnt == exp_cnt
     
     def test_init_invalid(self) -> None:
+        # no None nodes or None edges, or edges referencing nonexistent nodes (including None nodes)
+        # use iter() to make sure to try actual iterable non-sequences
+        # (earlier, there was a bug with iterable non-sequences)
         with pytest.raises(ValueError):
             Graph(nodes={None: {}})
         with pytest.raises(ValueError):
             Graph(nodes=(None,))
         with pytest.raises(ValueError):
+            Graph(nodes=iter((None,)))
+        with pytest.raises(ValueError):
             Graph(nodes=(1,), edges={None: {}})
         with pytest.raises(ValueError):
             Graph(nodes=(1,), edges=(None,))
+        with pytest.raises(ValueError):
+            Graph(nodes=(1,), edges=iter((None,)))
+        with pytest.raises(ValueError):
+            Graph(nodes=(1,), edges=((0,1),))
+        with pytest.raises(ValueError):
+            Graph(nodes=(1,), edges=((1,None),))
+        # now test with combination of valid and invalid nodes, and same for edges
+        with pytest.raises(ValueError):
+            Graph(nodes=(1, 0, None))
+        with pytest.raises(ValueError):
+            Graph(nodes=(0,1,2,), edges=((0,1), None))
+        with pytest.raises(ValueError):
+            Graph(nodes=(0,1,2,), edges=((0,1), (0, None)))
+        with pytest.raises(ValueError):
+            Graph(nodes=(0,1,2,), edges=((0,1), (0, -1)))
+        
+        g = Graph(nodes=(1,))
+        with pytest.raises(ValueError):
+            g.is_edge(2,1)
+        with pytest.raises(ValueError):
+            g.is_edge(1,2)
+        with pytest.raises(ValueError):
+            g.is_edge(2,3)
 
     @pytest.mark.parametrize("name", ("test_name", "", None))
     def test_empty_graph(self, name) -> None:
@@ -83,6 +111,7 @@ class TestGraph:
         g = Graph(nodes=nodes)
         assert len(g) == 1
         assert g.num_edges() == 0
+        assert not g.is_edge(1,1)
         # note special case of singular 'node' (not 'nodes') for 1 node
         assert str(g) == f"Graph '' with 1 node and 0 edges"
         self._test_iter(g, 1)
@@ -109,6 +138,9 @@ class TestGraph:
         g = Graph(nodes=nodes)
         assert len(g) == 2
         assert g.num_edges() == 0
+        assert not g.is_edge(1,1)
+        assert not g.is_edge(2,2)
+        assert not g.is_edge(1,2)
         assert str(g) == f"Graph '' with 2 nodes and 0 edges"
         self._test_iter(g, 2)
         assert 1 in g
@@ -146,6 +178,10 @@ class TestGraph:
         g = Graph(nodes=nodes, edges=edges, skip_duplicate_edges=True)
         assert len(g) == 2
         assert g.num_edges() == 1
+        assert g.is_edge(1,2)
+        assert g.is_edge(2,1)
+        assert not g.is_edge(1,1)
+        assert not g.is_edge(2,2)
         # note special case of singular 'edge' (not 'edges') for 1 edge
         assert str(g) == f"Graph '' with 2 nodes and 1 edge"
         self._test_iter(g, 2)
@@ -170,6 +206,11 @@ class TestGraph:
         g = Graph(nodes=nodes, edges=edges)
         assert len(g) == 7
         assert g.num_edges() == 4
+        assert g.is_edge(1, "test1")
+        assert g.is_edge(1, 2)
+        assert g.is_edge(2, "test1")
+        assert g.is_edge("a", ("a", "b", "c"))
+        assert not g.is_edge(1, "a")
         assert str(g) == f"Graph '' with 7 nodes and 4 edges"
         self._test_iter(g, 7)
         assert 1 in g
@@ -189,6 +230,7 @@ class TestGraph:
             g[None]
     
     def test_create_complete_graph(self) -> None:
+        # invalid k
         with pytest.raises(ValueError):
             Graph.create_complete_graph(-2)
         
@@ -203,3 +245,32 @@ class TestGraph:
             assert len(g) == k
             # this formula holds for edge cases of 1 and 2 nodes as well
             assert g.num_edges() == (k-1)*k/2
+            for node in range(k):
+                for other_node in range(node + 1, k):
+                    if node != other_node:
+                        assert g.is_edge(node, other_node)
+                    else:
+                        assert not g.is_edge(node, other_node)
+    
+    def test_create_spindly_tree(self) -> None:
+        # invalid k
+        with pytest.raises(ValueError):
+            Graph.create_spindly_tree(-2)
+        
+        # empty graph
+        g = Graph.create_spindly_tree(0)
+        assert len(g) == 0
+        assert g.num_edges() == 0
+
+        # 1, 2, and several nodes
+        for k in (1, 2, 12):
+            g = Graph.create_spindly_tree(k)
+            assert len(g) == k
+            # this formula holds for edge case of 1 node as well
+            assert g.num_edges() == k-1
+            for node in range(k):
+                for other_node in range(node + 1, k):
+                    if node + 1 == other_node:
+                        assert g.is_edge(node, other_node)
+                    else:
+                        assert not g.is_edge(node, other_node)

@@ -31,31 +31,31 @@ class Graph:
         if edges is None:
             edges = {}
         
-        if None in nodes:
-            raise ValueError("None is not a valid node")
-        if None in edges:
-            raise ValueError("None is not a valid edge")
+        if nodes:
+            if not isinstance(nodes, Mapping):
+                # nodes is Iterable[Hashable]; convert to Mapping format
+                # use temp nodes_map name to not override 'nodes' name
+                nodes_map: Mapping[Hashable, Mapping] = {}
+                for node in nodes:
+                    if node is None:
+                        raise ValueError("None is not a valid node.")
+                    if node in nodes_map:
+                        raise ValueError(f"Found duplicate node {node=}; duplicate nodes not allowed")
+                    nodes_map[node] = {}
+                nodes = nodes_map
+            if None in nodes:
+                raise ValueError("None is not a valid node")
+            # if nodes is passed in as a map, it can't have any duplicates since map keys are unique
         
-        if not nodes and edges:
-            raise ValueError("Must provide nodes when providing edges")
-        
-        if nodes and not isinstance(nodes, Mapping):
-            # nodes is Iterable[Hashable]; convert to Mapping format
-            # use temp nodes_map name to not override 'nodes' name
-            nodes_map: Mapping[Hashable, Mapping] = {}
-            for node in nodes:
-                if node in nodes_map:
-                    raise ValueError(f"Found duplicate node {node=}; duplicate nodes not allowed")
-                nodes_map[node] = {}
-            nodes = nodes_map
-        # if nodes is passed in as a map, it can't have any duplicates
-
         if edges:
             if not isinstance(edges, Mapping):
                 # edges is Iterable[tuple[Hashable, Hashable]]; convert to Mapping[tuple[Hashable, Hashable], Mapping] format
                 # use temp 'edges_map' name to not override 'edges' name
                 edges_map: Mapping[(Hashable, Hashable), Mapping] = {}
-                for u, v in edges:
+                for edge in edges:
+                    if edge is None:
+                        raise ValueError("Edges cannot be None.")
+                    u, v = edge
                     if u == v:
                         raise ValueError(f"Found self-loop for node {u}; self-loops are not allowed.")
                     if (u,v) in edges_map or (v,u) in edges_map:
@@ -66,6 +66,8 @@ class Graph:
                             raise ValueError(f"Found duplicate edge {(u,v)}; duplicate edges not allowed")
                     edges_map[(u,v)] = {}
                 edges = edges_map
+            if None in edges:
+                raise ValueError("None is not a valid edge")
             # if edges is already a Mapping, it can have duplicates (by having (u,v) and (v,u) which represent
             # the same edge), and it can have a self-loop. So I have to check again for these here. But it can't
             # have "explicit duplicates" in that it can't repeat (u,v) twice
@@ -86,6 +88,10 @@ class Graph:
                     raise ValueError(f"Unknown node {u} found in edges.")
                 if v not in nodes:
                     raise ValueError(f"Unknown node {v} found in edges.")
+        
+        
+        if not nodes and edges:
+            raise ValueError("Must provide nodes when providing edges")
 
         # instead of just storing all edges, use adjacency list representation
         neighbors: Mapping[Hashable, set] = {node: set() for node in nodes}
@@ -128,6 +134,13 @@ class Graph:
     def __getitem__(self, node: Hashable) -> Iterable[Hashable]:
         return self._neighbors[node]
     
+    def is_edge(self, u: Hashable, v: Hashable) -> bool:
+        if u not in self._neighbors:
+            raise ValueError(f"Node {u} not found.")
+        if v not in self._neighbors:
+            raise ValueError(f"Node {v} not found.")
+        return v in self._neighbors[u] or u in self._neighbors[v]
+    
     @staticmethod
     def create_complete_graph(k: int) -> "Graph":
         """Creates a complete graph with k nodes where each node is an int (k must be non-negative)."""
@@ -138,4 +151,14 @@ class Graph:
         for u in range(k):
             for v in range(u+1, k):
                 edges.append((u,v))
+        return Graph(nodes, edges)
+    
+    @staticmethod
+    def create_spindly_tree(k: int) -> "Graph":
+        """Creates a 'spindly tree' (i.e., no branching, all nodes in one line) with k nodes where each node
+        is an int (k must be non-negative)."""
+        if k < 0:
+            raise ValueError("k must be non-negative")
+        nodes = tuple(range(k))
+        edges = list((i, i+1) for i in range(k-1))
         return Graph(nodes, edges)
