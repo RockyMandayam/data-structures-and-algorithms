@@ -1,22 +1,46 @@
 import random
+import pytest
 
 from graphs.graph import Graph
+from graphs.graph_factory import GraphFactory
 
-class GraphFactoryTest:
+class TestGraphFactory:
+    
+    def test_concat_int_graphs(self) -> None:
+        # two empty graphs
+        g = Graph()
+        h = GraphFactory.concat_int_graphs((g,g))
+        assert len(h) == 0
+        
+        # two singleton graphs
+        g = Graph(nodes=1)
+        h = GraphFactory.concat_int_graphs((g,g))
+        assert len(h) == 2
+        assert set(h.get_nodes()) == set((0,1))
+
+        # example from concat_int_graphs docstring
+        h = GraphFactory.concat_int_graphs((GraphFactory.create_complete_graph(3), GraphFactory.create_spindly_tree(5)))
+        # So graphs[0] has nodes 0,1,2 and edges (0,1),(0,2),(1,2).
+        # And graphs[1] has nodes 0,1,2,3 and edges (0,1),(1,2),(2,3),(3,4)
+        assert len(h) == 8
+        assert set(range(8)) == set(h.get_nodes())
+        assert h.are_edges(((0,1),(0,2),(1,2),(3,4),(4,5),(5,6),(6,7)))
+
+
     def test_create_complete_graph(self) -> None:
         # invalid k
         with pytest.raises(ValueError):
-            Graph.create_complete_graph(-2)
+            GraphFactory.create_complete_graph(-2)
         
         # empty graph
-        g = Graph.create_complete_graph(0)
+        g = GraphFactory.create_complete_graph(0)
         assert len(g) == 0
         assert g.num_edges() == 0
 
         # 1, 2, and several nodes
         # TODO why is this so slow with 2**big_number
         for k in (1, 2, random.randint(3, 2**8)):
-            g = Graph.create_complete_graph(k)
+            g = GraphFactory.create_complete_graph(k)
             assert len(g) == k
             # this formula holds for edge cases of 1 and 2 nodes as well
             assert g.num_edges() == (k-1)*k/2
@@ -30,16 +54,16 @@ class GraphFactoryTest:
     def test_create_spindly_tree(self) -> None:
         # invalid k
         with pytest.raises(ValueError):
-            Graph.create_spindly_tree(-2)
+            GraphFactory.create_spindly_tree(-2)
         
         # empty graph
-        g = Graph.create_spindly_tree(0)
+        g = GraphFactory.create_spindly_tree(0)
         assert len(g) == 0
         assert g.num_edges() == 0
 
         # 1, 2, and several nodes
         for k in (1, 2, 12):
-            g = Graph.create_spindly_tree(k)
+            g = GraphFactory.create_spindly_tree(k)
             assert len(g) == k
             # this formula holds for edge case of 1 node as well
             assert g.num_edges() == k-1
@@ -55,7 +79,7 @@ class GraphFactoryTest:
         with pytest.raises(ValueError):
             GraphFactory.create_b_ary_tree(-1, 2)
         with pytest.raises(ValueError):
-            Graph(2, -1)
+            GraphFactory.create_b_ary_tree(2, -1)
         
         # depth 0
         g = GraphFactory.create_b_ary_tree(2, 0)
@@ -83,7 +107,7 @@ class GraphFactoryTest:
         # b=2, depth=2
         g = GraphFactory.create_b_ary_tree(2, 2)
         assert len(g) == 7
-        assert g.num_edges(6)
+        assert g.num_edges() == 6
         assert g.is_edge(0, 1)
         assert g.is_edge(0, 2)
         assert g.is_edge(1, 3)
@@ -92,10 +116,10 @@ class GraphFactoryTest:
         assert g.is_edge(2, 6)
 
         # test b and depth chosen at random in arbitrary range
-        for b in (3, random.randint(4, 10)):
-            for depth in (3, random.randint(4, 10)):
+        for b in (3, random.randint(4, 6)):
+            for depth in (3, random.randint(4, 6)):
                 g = GraphFactory.create_b_ary_tree(b, depth)
-                assert len(g) == (b**(depth+1)-1)/(depth-1)
+                assert len(g) == (b**(depth+1)-1)/(b-1)
                 assert g.num_edges() == len(g) - 1
     
     def test_create_nearly_spindly_b_ary_tree(self) -> None:
@@ -118,11 +142,24 @@ class GraphFactoryTest:
         g = GraphFactory.create_nearly_spindly_b_ary_tree(random.randint(1,10), 2)
         assert len(g) == 2
         assert g.num_edges() == 1
+
+        # b=1, n=3
+        g = GraphFactory.create_nearly_spindly_b_ary_tree(1, 3)
+        assert len(g) == 3
+        assert g.num_edges() == 2
+        assert g.are_edges(((0,1), (1,2)))
+
+        # b=2, n=3
+        g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 3)
+        assert len(g) == 3
+        assert g.num_edges() == 2
+        assert g.are_edges(((0,1), (0,2)))
         
         # 8 node binary example in docstring
         g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 8)
         assert len(g) == 8
         assert g.num_edges() == 7
+        
         exp_edges = [(0,1), (0,2), (1,3), (1,4), (3,5), (3,6), (5,7)]
         assert g.are_edges(exp_edges)
 
@@ -153,3 +190,66 @@ class GraphFactoryTest:
         assert g.num_edges() == 11
         exp_edges.append((7,11))
         assert g.are_edges(exp_edges)
+    
+    def test_create_look_ahead_graph(self) -> None:
+        # invalid n, look_ahead
+        with pytest.raises(ValueError):
+            GraphFactory.create_look_ahead_graph(-1, 1)
+        with pytest.raises(ValueError):
+            GraphFactory.create_look_ahead_graph(1, -1)
+        
+        # n=0
+        g = GraphFactory.create_look_ahead_graph(0, 1)
+        assert len(g) == 0
+
+        # n=1
+        g = GraphFactory.create_look_ahead_graph(1, 1)
+        assert len(g) == 1
+
+        # n=2, look_ahead=1
+        g = GraphFactory.create_look_ahead_graph(2, 1)
+        assert len(g) == 2
+        assert g.num_edges() == 1
+
+        # n=2, look_ahead=2, should be the same
+        g = GraphFactory.create_look_ahead_graph(2, 2)
+        assert len(g) == 2
+        assert g.num_edges() == 1
+
+        # n=3, look_ahead=1
+        g = GraphFactory.create_look_ahead_graph(3, 1)
+        assert len(g) == 3
+        assert g.num_edges() == 2
+        assert g.are_edges(((0,1), (1,2)))
+
+        # n=3, look_ahead=2
+        g = GraphFactory.create_look_ahead_graph(3, 2)
+        assert len(g) == 3
+        assert g.num_edges() == 3
+        assert g.are_edges(((0,1), (0,2), (1,2)))
+
+        # n=5, look_ahead=2, see example in create_look_ahead_graph docstring
+        g = GraphFactory.create_look_ahead_graph(5, 2)
+        assert len(g) == 5
+        assert g.num_edges() == 7
+        assert g.are_edges(((0,1), (0,2), (1,2), (1,3), (2,3), (2,4), (3,4)))
+    
+    def test_create_circuit(self) -> None:
+        # invalid graphs
+        with pytest.raises(ValueError):
+            GraphFactory.create_circuit(-1)
+        with pytest.raises(ValueError):
+            GraphFactory.create_circuit(0)
+        with pytest.raises(ValueError):
+            GraphFactory.create_circuit(1)
+        with pytest.raises(ValueError):
+            GraphFactory.create_circuit(2)
+        
+        # 3 nodes
+        g = GraphFactory.create_circuit(3)
+        assert len(g) == 3
+        assert g.num_edges() == 3
+        assert g.are_edges(((0,1), (1,2), (2,0)))
+
+
+
