@@ -97,3 +97,59 @@ class GraphFactoryTest:
                 g = GraphFactory.create_b_ary_tree(b, depth)
                 assert len(g) == (b**(depth+1)-1)/(depth-1)
                 assert g.num_edges() == len(g) - 1
+    
+    def test_create_nearly_spindly_b_ary_tree(self) -> None:
+        # invalid b, n
+        with pytest.raises(ValueError):
+            GraphFactory.create_nearly_spindly_b_ary_tree(0, 2)
+        with pytest.raises(ValueError):
+            GraphFactory.create_nearly_spindly_b_ary_tree(1, -1)
+        
+        # n=0
+        g = GraphFactory.create_nearly_spindly_b_ary_tree(random.randint(1,10), 0)
+        assert len(g) == 0
+
+
+        # n=1
+        g = GraphFactory.create_nearly_spindly_b_ary_tree(random.randint(1,10), 1)
+        assert len(g) == 1
+
+        # n=2
+        g = GraphFactory.create_nearly_spindly_b_ary_tree(random.randint(1,10), 2)
+        assert len(g) == 2
+        assert g.num_edges() == 1
+        
+        # 8 node binary example in docstring
+        g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 8)
+        assert len(g) == 8
+        assert g.num_edges() == 7
+        exp_edges = [(0,1), (0,2), (1,3), (1,4), (3,5), (3,6), (5,7)]
+        assert g.are_edges(exp_edges)
+
+        # same but with 9 nodes
+        g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 9)
+        assert len(g) == 9
+        assert g.num_edges() == 8
+        exp_edges.append((5,8))
+        assert g.are_edges(exp_edges)
+
+        # 10 node 3-ary example in docstring
+        g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 10)
+        assert len(g) == 10
+        assert g.num_edges() == 9
+        exp_edges = [(0,1), (0,2), (0,3), (1,4), (1,5), (1,6), (4,7), (4,8), (4,9)]
+        assert g.are_edges(exp_edges)
+
+        # same with 11 nodes
+        g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 11)
+        assert len(g) == 11
+        assert g.num_edges() == 10
+        exp_edges.append((7,10))
+        assert g.are_edges(exp_edges)
+
+        # same with 12 nodes
+        g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 12)
+        assert len(g) == 12
+        assert g.num_edges() == 11
+        exp_edges.append((7,11))
+        assert g.are_edges(exp_edges)

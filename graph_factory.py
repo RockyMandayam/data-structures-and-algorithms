@@ -41,7 +41,7 @@ class GraphFactory:
             raise ValueError("depth must be non-negative.")
         # b-ary tree has b^0 + b^1 + ... + b^(depth) nodes
         # that geometric series sums to (b**(depth+1)-1)/(b-1)
-        n = (b**(depth+1)-1)/(b-1)
+        n = (b**(depth + 1) - 1) // (b - 1)
         # edges: go node by node and add its child
         # child = b*parent + k for k in 1, ..., b
         # 0->1, 0->2
@@ -57,3 +57,37 @@ class GraphFactory:
                 if child < n:
                     edges.append((parent, child))
         return Graph(nodes=n, edges=edges)
+
+    @staticmethod
+    def create_nearly_spindly_b_ary_tree(b: int, n: int) -> Graph:
+        """Creates a "nearly" spindly tree by "fattening" by one node at each level.
+
+        Example with 8 nodes, 2-ary tree:
+        the "left branch" is 0, 1, 3, 5, 7, ... and 0, 1, 3 have one right child leaf
+                                0
+                        1           2
+                3           4
+            5       6
+        7
+
+        Example with 10 nodes, 3-ary tree:
+                                0
+                    1               2       3
+            4           5   6
+        7     8  9
+                    
+        """
+        if b <= 0:
+            raise ValueError("b must be positive.")
+        if n < 0:
+            raise ValueError("n must be non-negative")
+        nodes = tuple(range(n))
+        
+        edges = []
+        for child_of_zero in range(1, n):
+            edges.append((0, child_of_zero))
+        for node_on_long_branch in range(1, n, b):
+            for child in range(node_on_long_branch + b, node_on_long_branch + b + b):
+                if child < n:
+                    edges.append((node_on_long_branch, child))
+        return Graph(nodes=nodes, edges=edges)
