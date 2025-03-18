@@ -18,7 +18,7 @@ def dfs_recursive(
     g: Graph,
     seed_order: Order | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
-) -> None:
+) -> tuple[Sequence, Sequence]:
     """Recursive implementation of DFS.
 
     In general, to help with intuition, I maintain two separate concepts of "exploring" a node vs "finalizing" a node:
