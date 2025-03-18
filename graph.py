@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Hashable, Mapping, Iterator, Collection
+from collections.abc import Iterable, Hashable, Mapping, Iterator, Collection, Sequence
 from typing import Any
 
 class Graph:
@@ -24,83 +24,65 @@ class Graph:
     def __init__(
         self,
         nodes: Mapping[Hashable, Mapping] | Iterable[Hashable] | int | None = None,
-        edges: Mapping[tuple[Hashable, Hashable], Mapping] | Iterable[tuple[Hashable, Hashable]] | None = None,
+        edges: Mapping[tuple[Hashable, Hashable], Mapping] | Sequence[tuple[Hashable, Hashable]] | None = None,
         name: str | None = None,
         skip_duplicate_edges: bool = False
     ) -> None:
+        ### convert nodes to the right format
+        # handle None case
         if nodes is None:
             nodes = {}
+        # handle int case: convert to iterable from 0...n-1
+        if isinstance(nodes, int):
+            if nodes < 0:
+                raise ValueError("Graph must have a non-negative number of nodes.")
+            nodes = range(nodes)
+        # handle Iterable[Hashable] case: convert to mapping (Mapping is also Iterable, so instead of checking
+        # isinstance of Iterable, check not isinstance of Mapping)
+        if nodes and not isinstance(nodes, Mapping):
+            # nodes is Iterable[Hashable]; convert to Mapping format
+            # use temp nodes_map name to not override 'nodes' name
+            nodes_map: Mapping[Hashable, Mapping] = {}
+            for node in nodes:
+                if node in nodes_map:
+                    raise ValueError(f"Found duplicate node {node=}; duplicate nodes not allowed")
+                nodes_map[node] = {}
+            nodes = nodes_map
+        # validate nodes
+        if None in nodes:
+            raise ValueError("None is not a valid node.")
+        
+        ### convert edges to the right format
+        # handle None case
         if edges is None:
             edges = {}
-        
-        if nodes:
-            # if nodes is int, convert to iterable from 0...n-1
-            if isinstance(nodes, int):
-                if nodes < 0:
-                    raise ValueError("Graph must have a non-negative number of nodes.")
-                nodes = range(nodes)
-            # if nodes is Iterable[Hashable], convert to mapping (Mapping is also Iterable, so instead of checking
-            # isinstance of Iterable, check not isinstance of Mapping)
-            if not isinstance(nodes, Mapping):
-                # nodes is Iterable[Hashable]; convert to Mapping format
-                # use temp nodes_map name to not override 'nodes' name
-                nodes_map: Mapping[Hashable, Mapping] = {}
-                for node in nodes:
-                    if node is None:
-                        raise ValueError("None is not a valid node.")
-                    if node in nodes_map:
-                        raise ValueError(f"Found duplicate node {node=}; duplicate nodes not allowed")
-                    nodes_map[node] = {}
-                nodes = nodes_map
-            if None in nodes:
-                raise ValueError("None is not a valid node")
-            # if nodes is passed in as a map, it can't have any duplicates since map keys are unique
-        
-        if edges:
-            if not isinstance(edges, Mapping):
-                # edges is Iterable[tuple[Hashable, Hashable]]; convert to Mapping[tuple[Hashable, Hashable], Mapping] format
-                # use temp 'edges_map' name to not override 'edges' name
-                edges_map: Mapping[(Hashable, Hashable), Mapping] = {}
-                for edge in edges:
-                    if edge is None:
-                        raise ValueError("Edges cannot be None.")
-                    u, v = edge
-                    if u == v:
-                        raise ValueError(f"Found self-loop for node {u}; self-loops are not allowed.")
-                    if (u,v) in edges_map or (v,u) in edges_map:
-                        if skip_duplicate_edges:
-                            # don't want to add (u,v) and (v,u), just skip this
-                            continue
-                        else:
-                            raise ValueError(f"Found duplicate edge {(u,v)}; duplicate edges not allowed")
-                    edges_map[(u,v)] = {}
-                edges = edges_map
-            if None in edges:
-                raise ValueError("None is not a valid edge")
-            # if edges is already a Mapping, it can have duplicates (by having (u,v) and (v,u) which represent
-            # the same edge), and it can have a self-loop. So I have to check again for these here. But it can't
-            # have "explicit duplicates" in that it can't repeat (u,v) twice
-            cleaned_edges = {}
-            for u, v in edges:
-                if u == v:
-                    raise ValueError(f"Found self-loop for node {u}; self-loops are not allowed.")
-                if (u,v) in cleaned_edges or (v,u) in cleaned_edges:
-                    if skip_duplicate_edges:
-                        continue
-                    else:
-                        raise ValueError(f"Found duplicate edge {(u,v)}; duplicate edges not allowed")
-                cleaned_edges[(u,v)] = edges[(u,v)]
-            edges = cleaned_edges
-
-            for u, v in edges:
-                if u not in nodes:
-                    raise ValueError(f"Unknown node {u} found in edges.")
-                if v not in nodes:
-                    raise ValueError(f"Unknown node {v} found in edges.")
-        
-        
-        if not nodes and edges:
-            raise ValueError("Must provide nodes when providing edges")
+        # handle Iterable[tuple] case: convert to Mapping[tuple[Hashable, Hashable], Mapping] format
+        # use temp 'edges_map' name to not override 'edges' name
+        if edges and not isinstance(edges, Mapping):
+            edges_map: Mapping[tuple(Hashable, Hashable), Mapping] = {(u,v): {} for (u,v) in edges}
+            if not skip_duplicate_edges and len(edges_map) != len(edges):
+                raise ValueError("Duplicate edges not allowed")
+            edges = edges_map
+        # validate edges
+        # if edges is already a Mapping, it can have duplicates (by having (u,v) and (v,u) which represent
+        # the same edge), and it can have a self-loop. Check for these here. But it can't have "explicit duplicates"
+        # in that it can't repeat (u,v) twice
+        cleaned_edges = {}
+        for u, v in edges:
+            if u == v:
+                raise ValueError(f"Found self-loop for node {u}; self-loops are not allowed.")
+            if (v,u) in cleaned_edges:
+                if skip_duplicate_edges:
+                    continue
+                else:
+                    raise ValueError(f"Found duplicate edge {(u,v)}; duplicate edges not allowed")
+            cleaned_edges[(u,v)] = edges[(u,v)]
+        edges = cleaned_edges
+        for u, v in edges:
+            if u not in nodes:
+                raise ValueError(f"Unknown node {u} found in edges.")
+            if v not in nodes:
+                raise ValueError(f"Unknown node {v} found in edges.")
 
         # adjacency list representation is easier for some tasks
         neighbors: Mapping[Hashable, set] = {node: set() for node in nodes}

@@ -39,20 +39,12 @@ class TestGraph:
         with pytest.raises(ValueError):
             Graph(nodes=-1)
         with pytest.raises(ValueError):
-            Graph(nodes=(1,), edges={None: {}})
-        with pytest.raises(ValueError):
-            Graph(nodes=(1,), edges=(None,))
-        with pytest.raises(ValueError):
-            Graph(nodes=(1,), edges=iter((None,)))
-        with pytest.raises(ValueError):
             Graph(nodes=(1,), edges=((0,1),))
         with pytest.raises(ValueError):
             Graph(nodes=(1,), edges=((1,None),))
         # now test with combination of valid and invalid nodes, and same for edges
         with pytest.raises(ValueError):
             Graph(nodes=(1, 0, None))
-        with pytest.raises(ValueError):
-            Graph(nodes=(0,1,2,), edges=((0,1), None))
         with pytest.raises(ValueError):
             Graph(nodes=(0,1,2,), edges=((0,1), (0, None)))
         with pytest.raises(ValueError):

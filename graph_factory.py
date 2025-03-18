@@ -156,4 +156,4 @@ class GraphFactory:
         """
         if n < 3:
             raise ValueError("n must be at least 3")
-        return Graph(nodes=range(n), edges=((i, (i+1)%n) for i in range(n)))
+        return Graph(nodes=range(n), edges=[(i, (i+1)%n) for i in range(n)])
