@@ -22,6 +22,7 @@ class Graph:
             a tuple of the weight of the edge (float) and its attributes (Mapping)
             - NOTE: an edge (u,v) will be present as (u,v) or (v,u) but not both
         _neighbors (Mapping[Hashable, set]): Map from node to its neighbors (a set is used for neighbors - no duplicates!)
+            - _neighbors will have the exact same nodes as _nodes, even nodes with no neighbors
             - NOTE: this does contain redundant information that is already present, but this adjacency set is useful for fast
                 lookup of neighbors. Note that an edge (u,v) will manifest as v being a neighbor u and u being a neighbor of v
     """
@@ -158,13 +159,16 @@ class Graph:
             neighbors[v].add(u)
         return neighbors
 
-    def get_node_attribute(self, node: Hashable, key: Any) -> Any:
-        # TODO maybe return copy
-        return self._nodes[node][key]
-
-    def get_node_attributes(self, node: Hashable) -> Mapping:
-        # TODO maybe return copy
+    def get_node_attrs(self, node: Hashable) -> Mapping:
+        if node not in self._nodes:
+            raise ValueError(f"Unknown node {node=}")
         return self._nodes[node]
+
+    def get_node_attr(self, node: Hashable, key: Any) -> Any:
+        attrs = self.get_node_attrs(node)
+        if key not in attrs:
+            raise ValueError(f"Unknown node attribute key {key=}")
+        return attrs[key]
 
     def __len__(self) -> int:
         return len(self._nodes)
@@ -183,22 +187,23 @@ class Graph:
         return node in self._nodes
 
     def __getitem__(self, node: Hashable) -> Iterable[Hashable]:
+        # KeyError desired if node not in self._neighbors
         return self._neighbors[node]
 
     def get_nodes(self) -> Collection[Hashable]:
         return self._nodes
 
-    def get_edges(self) -> Collection[Hashable]:
+    def get_edges(self) -> Collection[tuple[Hashable, Hashable]]:
         return self._edges
 
     def is_edge(self, edge: tuple[Hashable, Hashable]) -> bool:
         """Returns True if edge= is an edge in this graph; False otherwise"""
         u, v = edge
-        if u not in self._neighbors:
-            raise ValueError(f"Node {u} not found.")
-        if v not in self._neighbors:
-            raise ValueError(f"Node {v} not found.")
-        return v in self._neighbors[u] or u in self._neighbors[v]
+        if u not in self._nodes:
+            raise ValueError(f"Unknown node {u=}")
+        if v not in self._nodes:
+            raise ValueError(f"Unknown node {v=}")
+        return (u, v) in self._edges or (v, u) in self._edges
 
     def are_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> bool:
         """Returns True if all edges are in the graph; False otherwise"""
@@ -216,6 +221,10 @@ class Graph:
         self, u: Hashable, v: Hashable, attributes: Mapping | None = None
     ) -> None:
         """Adds edge if not present; errors if also present"""
+        if u not in self._nodes:
+            raise ValueError(f"Unknown node {u=}")
+        if v not in self._nodes:
+            raise ValueError(f"Unknown node {v=}")
         if self.is_edge((u, v)):
             raise ValueError(f"Edge ({u}, {v}) already exists.")
         self._edges[(u, v)] = attributes
