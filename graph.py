@@ -16,39 +16,40 @@ class Graph:
         - No self-loops
 
     Attributes:
+        name (str): name of graph
         _nodes (Mapping[Hashable, Mapping]): Map from node (a Hashable) to its attributes (a Mapping).
-        _edges
+        _edges (Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]]): Map from edge (tuple of nodes (u,v)) to
+            a tuple of the weight of the edge (float) and its attributes (Mapping)
+            - NOTE: an edge (u,v) will be present as (u,v) or (v,u) but not both
         _neighbors (Mapping[Hashable, set]): Map from node to its neighbors (a set is used for neighbors - no duplicates!)
-        _name (str): name of graph
+            - _neighbors will have the exact same nodes as _nodes, even nodes with no neighbors
+            - NOTE: this does contain redundant information that is already present, but this adjacency set is useful for fast
+                lookup of neighbors. Note that an edge (u,v) will manifest as v being a neighbor u and u being a neighbor of v
     """
+
+    DEFAULT_EDGE_WEIGHT: float = 1
 
     def __init__(
         self,
         nodes: Mapping[Hashable, Mapping] | Iterable[Hashable] | int | None = None,
-        edges: Mapping[tuple[Hashable, Hashable], Mapping]
+        edges: Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]]
+        | Mapping[tuple[Hashable, Hashable], Mapping]
+        | Sequence[tuple[tuple[Hashable, Hashable], float]]
         | Sequence[tuple[Hashable, Hashable]]
         | None = None,
         name: str | None = None,
         skip_duplicate_edges: bool = False,
     ) -> None:
         self.name = name or ""
-        self._nodes = self._construct_and_validate_nodes(nodes)
+        self._nodes = Graph._construct_and_validate_nodes(nodes)
         self._edges = Graph._construct_and_validate_edges(
             self._nodes, edges, skip_duplicate_edges
         )
+        self._neighbors = Graph._construct_neighbors(self._nodes, self._edges)
 
-        # adjacency list representation is easier for some tasks
-        neighbors: Mapping[Hashable, set] = {node: set() for node in self._nodes}
-        for u, v in self._edges:
-            neighbors[u].add(v)
-            neighbors[v].add(u)
-        # NOTE: we are storing redundant info in edges and neighbors,
-        # since each data structure is useful for different tasks
-        # edges contains more info though, since it contains edge attributes
-        self._neighbors = neighbors
-
+    @staticmethod
     def _construct_and_validate_nodes(
-        self, nodes: Mapping[Hashable, Mapping] | Iterable[Hashable] | int | None
+        nodes: Mapping[Hashable, Mapping] | Iterable[Hashable] | int | None
     ) -> Mapping[Hashable, Mapping]:
         """Construct nodes Mapping by converting input nodes to the right format, and validate."""
         # handle None case
@@ -80,7 +81,9 @@ class Graph:
     @staticmethod
     def _construct_and_validate_edges(
         nodes: Mapping[Hashable, Mapping],
-        edges: Mapping[tuple[Hashable, Hashable], Mapping]
+        edges: Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]]
+        | Mapping[tuple[Hashable, Hashable], Mapping]
+        | Sequence[tuple[tuple[Hashable, Hashable], float]]
         | Sequence[tuple[Hashable, Hashable]]
         | None,
         skip_duplicate_edges: bool,
@@ -89,11 +92,31 @@ class Graph:
         # handle None case
         if edges is None:
             edges = {}
-        # handle Iterable[tuple] case: convert to Mapping[tuple[Hashable, Hashable], Mapping] format
-        # use temp 'edges_map' name to not override 'edges' name
-        if edges and not isinstance(edges, Mapping):
-            edges_map: Mapping[tuple(Hashable, Hashable), Mapping] = {
-                (u, v): {} for (u, v) in edges
+        # handle Sequence[tuple[tuple[Hashable, Hashable], float]]: convert to
+        # Sequence[tuple[tuple[Hashable, Hashable], float]]
+        if (
+            isinstance(edges, Sequence)
+            and edges
+            and edges[0]
+            and isinstance(edges[0][0], Hashable)
+        ):
+            edges = [(edge, Graph.DEFAULT_EDGE_WEIGHT) for edge in edges]
+        # handle Mapping[tuple[Hashable, Hashable], Mapping]: convert to
+        # Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]] format
+        if (
+            isinstance(edges, Mapping)
+            and edges
+            and isinstance(next(iter(edges.values())), Mapping)
+        ):
+            edges = {
+                edge: (Graph.DEFAULT_EDGE_WEIGHT, attrs)
+                for edge, attrs in edges.items()
+            }
+        # handle Sequence[tuple[tuple[Hashable, Hashable], float]]: convert to
+        # Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]] format
+        if isinstance(edges, Sequence):
+            edges_map: Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]] = {
+                (u, v): (weight, {}) for ((u, v), weight) in edges
             }
             # easier way to check for duplicates than checking iteratively while adding edges
             if not skip_duplicate_edges and len(edges_map) != len(edges):
@@ -125,13 +148,27 @@ class Graph:
                 raise ValueError(f"Unknown node {v} found in edges.")
         return edges
 
-    def get_node_attribute(self, node: Hashable, key: Any) -> Any:
-        # TODO maybe return copy
-        return self._nodes[node][key]
+    @staticmethod
+    def _construct_neighbors(
+        nodes: Mapping[Hashable, Mapping],
+        edges: Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]],
+    ) -> Mapping[Hashable, set]:
+        neighbors: Mapping[Hashable, set] = {node: set() for node in nodes}
+        for u, v in edges:
+            neighbors[u].add(v)
+            neighbors[v].add(u)
+        return neighbors
 
-    def get_node_attributes(self, node: Hashable) -> Mapping:
-        # TODO maybe return copy
+    def get_node_attrs(self, node: Hashable) -> Mapping:
+        if node not in self._nodes:
+            raise ValueError(f"Unknown node {node=}")
         return self._nodes[node]
+
+    def get_node_attr(self, node: Hashable, key: Any) -> Any:
+        attrs = self.get_node_attrs(node)
+        if key not in attrs:
+            raise ValueError(f"Unknown node attribute key {key=}")
+        return attrs[key]
 
     def __len__(self) -> int:
         return len(self._nodes)
@@ -150,22 +187,23 @@ class Graph:
         return node in self._nodes
 
     def __getitem__(self, node: Hashable) -> Iterable[Hashable]:
+        # KeyError desired if node not in self._neighbors
         return self._neighbors[node]
 
     def get_nodes(self) -> Collection[Hashable]:
         return self._nodes
 
-    def get_edges(self) -> Collection[Hashable]:
+    def get_edges(self) -> Collection[tuple[Hashable, Hashable]]:
         return self._edges
 
     def is_edge(self, edge: tuple[Hashable, Hashable]) -> bool:
         """Returns True if edge= is an edge in this graph; False otherwise"""
         u, v = edge
-        if u not in self._neighbors:
-            raise ValueError(f"Node {u} not found.")
-        if v not in self._neighbors:
-            raise ValueError(f"Node {v} not found.")
-        return v in self._neighbors[u] or u in self._neighbors[v]
+        if u not in self._nodes:
+            raise ValueError(f"Unknown node {u=}")
+        if v not in self._nodes:
+            raise ValueError(f"Unknown node {v=}")
+        return (u, v) in self._edges or (v, u) in self._edges
 
     def are_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> bool:
         """Returns True if all edges are in the graph; False otherwise"""
@@ -183,6 +221,10 @@ class Graph:
         self, u: Hashable, v: Hashable, attributes: Mapping | None = None
     ) -> None:
         """Adds edge if not present; errors if also present"""
+        if u not in self._nodes:
+            raise ValueError(f"Unknown node {u=}")
+        if v not in self._nodes:
+            raise ValueError(f"Unknown node {v=}")
         if self.is_edge((u, v)):
             raise ValueError(f"Edge ({u}, {v}) already exists.")
         self._edges[(u, v)] = attributes
