@@ -216,11 +216,17 @@ class Graph:
         if node in self._nodes:
             raise ValueError(f"Node {node=} already present in graph")
         self._nodes[node] = attributes
+        self._neighbors[node] = set()
+
+    def add_nodes(self, nodes: Iterable[Hashable]) -> None:
+        for node in nodes:
+            self.add_node(node)
 
     def add_edge(
-        self, u: Hashable, v: Hashable, attributes: Mapping | None = None
+        self, edge: tuple[Hashable, Hashable], attributes: Mapping | None = None
     ) -> None:
         """Adds edge if not present; errors if also present"""
+        u, v = edge
         if u not in self._nodes:
             raise ValueError(f"Unknown node {u=}")
         if v not in self._nodes:
@@ -229,3 +235,8 @@ class Graph:
             raise ValueError(f"Edge ({u}, {v}) already exists.")
         self._edges[(u, v)] = attributes
         self._neighbors[u].add(v)
+        self._neighbors[v].add(u)
+
+    def add_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> None:
+        for edge in edges:
+            self.add_edge(edge)
