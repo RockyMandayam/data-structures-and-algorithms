@@ -92,18 +92,18 @@ class TestGraph:
             g[None]
 
     @pytest.mark.parametrize(
-        ("nodes_iterable_factory", "edges_iterable_factory"),
+        ("nodes_iterable_factory", "edges_sequence_factory"),
         (
             (None, None),
             (lambda d: d.keys(), None),
-            (tuple, lambda d: d.keys()),
+            (tuple, lambda d: list(d.keys())),
             (list, tuple),
         ),
     )
     def test_nontrivial_graphs(
         self,
         nodes_iterable_factory: Callable[[dict], Iterable] | None,
-        edges_iterable_factory: Callable[[dict], Iterable] | None,
+        edges_sequence_factory: Callable[[dict], Iterable] | None,
     ) -> None:
         """Tests __init__, __len__, num_edges, etc. methods for nontrivial graphs.
 
@@ -112,8 +112,8 @@ class TestGraph:
                 A graph can alternatively be initialized via an iterable of nodes. If nodes_iterable_factory is None, the map
                 initializer is used. If nodes_iterable_factory is a callable, nodes_iterable_factory is used to convert the map
                 to an iterable, which is used to initialize the graph. This makes sure to test both code paths.
-            edges_iterable_factory: Just like with nodes, you can initialize edges via an edge attribute map or an iterable. If
-                edges_iterable_factory is None, the map is used. If edges_iterable_factory is a callable, edges_iterable_factory is
+            edges_sequence_factory: Just like with nodes, you can initialize edges via an edge attribute map or an iterable. If
+                edges_sequence_factory is None, the map is used. If edges_sequence_factory is a callable, edges_sequence_factory is
                 used to convert the map to an iterable which is used to initialize the graph. This makes sure to test both code paths.
         """
         ### test with one node
@@ -145,8 +145,8 @@ class TestGraph:
 
         ### test with one node and self-loop
         edges = {(1, 1): {}}
-        if edges_iterable_factory:
-            edges = edges_iterable_factory(edges)
+        if edges_sequence_factory:
+            edges = edges_sequence_factory(edges)
         with pytest.raises(ValueError):
             g = Graph(nodes=nodes, edges=edges)
 
@@ -179,8 +179,8 @@ class TestGraph:
             nodes = nodes_iterable_factory(nodes)
         # test edges referencing unknown nodes
         edges = {(1, 3): {}}
-        if edges_iterable_factory:
-            edges = edges_iterable_factory(edges)
+        if edges_sequence_factory:
+            edges = edges_sequence_factory(edges)
         with pytest.raises(ValueError):
             g = Graph(nodes=nodes, edges=edges)
         # test "explicit" duplicate using iterable format
@@ -189,8 +189,8 @@ class TestGraph:
             g = Graph(nodes=nodes, edges=edges)
         # test "duplicate" (reversed order) edge
         edges = {(1, 2): {}, (2, 1): {}}
-        if edges_iterable_factory:
-            edges = edges_iterable_factory(edges)
+        if edges_sequence_factory:
+            edges = edges_sequence_factory(edges)
         with pytest.raises(ValueError):
             g = Graph(nodes=nodes, edges=edges)
         # now allow it by enabling skip_duplicate_edges
@@ -233,8 +233,8 @@ class TestGraph:
             (2, "test1"): {},
             ("a", ("a", "b", "c")): {},
         }
-        if edges_iterable_factory:
-            edges = edges_iterable_factory(edges)
+        if edges_sequence_factory:
+            edges = edges_sequence_factory(edges)
         g = Graph(nodes=nodes, edges=edges)
         assert len(g) == 7
         assert g.num_edges() == 4
