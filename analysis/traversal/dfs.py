@@ -16,6 +16,7 @@ class Order(Enum):
 # TODO: from only one source
 def dfs_recursive(
     g: Graph,
+    *,
     seed_order: Order | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
 ) -> tuple[Sequence, Sequence]:
