@@ -1,8 +1,9 @@
 from collections.abc import Iterable
+
 from graphs.graph import Graph
 
-class GraphFactory:
 
+class GraphFactory:
     @staticmethod
     def concat_int_graphs(graphs: Iterable[Graph]) -> Graph:
         """Given graphs with non-negative int nodes, "concatenate" graphs to create a new graph which just includes all the given
@@ -21,11 +22,10 @@ class GraphFactory:
         edges = []
         for g in graphs:
             assert all(isinstance(node, int) for node in g)
-            edges.extend([(u+num_nodes, v+num_nodes) for (u, v) in g.get_edges()])
+            edges.extend([(u + num_nodes, v + num_nodes) for (u, v) in g.get_edges()])
             num_nodes += len(g)
         return Graph(nodes=range(num_nodes), edges=edges)
 
-    
     @staticmethod
     def create_complete_graph(k: int) -> Graph:
         """Creates a complete graph with k nodes where each node is an int (k must be non-negative)."""
@@ -34,10 +34,10 @@ class GraphFactory:
         nodes = tuple(range(k))
         edges = []
         for u in range(k):
-            for v in range(u+1, k):
-                edges.append((u,v))
+            for v in range(u + 1, k):
+                edges.append((u, v))
         return Graph(nodes, edges)
-    
+
     @staticmethod
     def create_spindly_tree(k: int) -> Graph:
         """Creates a 'spindly tree' (i.e., no branching, all nodes in one line) with k nodes where each node
@@ -45,7 +45,7 @@ class GraphFactory:
         if k < 0:
             raise ValueError("k must be non-negative")
         nodes = tuple(range(k))
-        edges = list((i, i+1) for i in range(k-1))
+        edges = list((i, i + 1) for i in range(k - 1))
         return Graph(nodes, edges)
 
     @staticmethod
@@ -56,11 +56,11 @@ class GraphFactory:
                     0
             1               2
         3       4       5       6
-        
+
         Args:
             b: Positive branching factor
             depth: Non-negative 0-indexed depth (depth of 0 means graph with one node)
-        
+
         Returns:
             Graph: nary tree
         """
@@ -70,7 +70,7 @@ class GraphFactory:
             raise ValueError("depth must be non-negative.")
         # b-ary tree has b^0 + b^1 + ... + b^(depth) nodes
         # that geometric series sums to (b**(depth+1)-1)/(b-1)
-        n = (b**(depth + 1) - 1) // (b - 1) if b != 1 else depth+1
+        n = (b ** (depth + 1) - 1) // (b - 1) if b != 1 else depth + 1
         # edges: go node by node and add its child
         # child = b*parent + k for k in 1, ..., b
         # 0->1, 0->2
@@ -81,8 +81,8 @@ class GraphFactory:
         #   2->7, 2->8, 2-> 9
         edges = []
         for parent in range(n):
-            for k in range(1, b+1):
-                child = b*parent + k
+            for k in range(1, b + 1):
+                child = b * parent + k
                 if child < n:
                     edges.append((parent, child))
         return Graph(nodes=n, edges=edges)
@@ -104,14 +104,14 @@ class GraphFactory:
                     1               2       3
             4           5   6
         7     8  9
-                    
+
         """
         if b <= 0:
             raise ValueError("b must be positive.")
         if n < 0:
             raise ValueError("n must be non-negative")
         nodes = tuple(range(n))
-        
+
         edges = []
         for child_of_zero in range(1, b + 1):
             if child_of_zero < n:
@@ -121,13 +121,13 @@ class GraphFactory:
                 if child < n:
                     edges.append((node_on_long_branch, child))
         return Graph(nodes=nodes, edges=edges)
-    
+
     @staticmethod
     def create_look_ahead_graph(n: int, look_ahead: int) -> Graph:
         """Create "look ahead" graph, described below, with n nodes and a "look ahead" distance of look_ahead.
 
         (This is like a DAG structure if you draw it out, but it's undirected, not driected)
-        
+
         E.g., n=5, look_ahead=2
         0, 1, 2, 3, 4
         0->1, 0->2
@@ -146,14 +146,14 @@ class GraphFactory:
                 if child < n:
                     edges.append((parent, child))
         return Graph(nodes=nodes, edges=edges)
-    
+
     @staticmethod
     def create_circuit(n: int) -> Graph:
         """Creates a circuit (cycle) of n nodes.
-        
+
         n must be at least 3, since to create a valid circuit (closed walk that does not repeat edges),
         you need at least 3 nodes.
         """
         if n < 3:
             raise ValueError("n must be at least 3")
-        return Graph(nodes=range(n), edges=[(i, (i+1)%n) for i in range(n)])
+        return Graph(nodes=range(n), edges=[(i, (i + 1) % n) for i in range(n)])
