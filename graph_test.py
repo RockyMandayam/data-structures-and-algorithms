@@ -240,4 +240,44 @@ class TestGraph:
         with pytest.raises(KeyError):
             g[None]
     
+    def test_add_node(self) -> None:
+        # invalid nodes
+        g = Graph()
+        with pytest.raises(ValueError):
+            g.add_node(None)
+        g.add_node(0)
+        with pytest.raises(ValueError):
+            g.add_node(0)
+        
+        g.add_node(1)
     
+    def test_add_edge(self) -> None:
+        # invalid edges
+        g = Graph(nodes=4, edges=((1,2),))
+        with pytest.raises(ValueError):
+            g.add_edge(None, None)
+        with pytest.raises(ValueError):
+            g.add_edge(1,2)
+        with pytest.raises(ValueError):
+            g.add_edge(2,1)
+        
+        # valid edges
+        g.add_edge(2,3)
+        assert len(g) == 4
+        assert g.num_edges() == 2
+        for u in range(4):
+            for v in range(4):
+                if (u,v) in ((1,2), (2,1), (2,3), (3,2)):
+                    assert g.is_edge(u, v)
+                else:
+                    assert not g.is_edge(u, v)
+        assert str(g) == f"Graph '' with 4 nodes and 2 edges"
+        self._test_iter(g, 4)
+        assert all(v in g for v in range(4))
+        assert -1 not in g
+        assert None not in g
+        assert len(g[0]) == 0
+        assert len(g[1]) == 1
+        assert len(g[2]) == 2
+        
+

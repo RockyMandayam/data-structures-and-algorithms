@@ -102,7 +102,7 @@ class Graph:
         if not nodes and edges:
             raise ValueError("Must provide nodes when providing edges")
 
-        # instead of just storing all edges, use adjacency list representation
+        # adjacency list representation is easier for some tasks
         neighbors: Mapping[Hashable, set] = {node: set() for node in nodes}
         num_edges = 0
         neighbors = {node: set() for node in nodes}
@@ -112,6 +112,10 @@ class Graph:
             num_edges += 1
         
         self._nodes = nodes
+        self._edges = edges
+        # NOTE: we are storing redundant info in edges and neighbors,
+        # since each data structure is useful for different tasks
+        # edges contains more info though, since it contains edge attributes
         self._neighbors = neighbors
         self._num_edges = num_edges
         self.name = name or ""
@@ -146,6 +150,9 @@ class Graph:
     def get_nodes(self) -> Collection[Hashable]:
         return self._nodes
     
+    def get_edges(self) -> Collection[Hashable]:
+        return self._edges
+    
     def is_edge(self, u: Hashable, v: Hashable) -> bool:
         """Returns True if (u,v) is an edge in this graph; False otherwise"""
         if u not in self._neighbors:
@@ -156,4 +163,21 @@ class Graph:
     
     def are_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> bool:
         """Returns True if all edges are in the graph; False otherwise"""
-        return all(self.is_edge(edge) for edge in edges)
+        return all(self.is_edge(u, v) for u, v in edges)
+    
+    def add_node(self, node: Hashable, attributes: Mapping | None = None) -> None:
+        """Adds node if not present and not None; errors if already present"""
+        if node is None:
+            raise ValueError("None is not a valid node.")
+        if node in self._nodes:
+            raise ValueError("node already present in graph")
+        self._nodes[node] = attributes
+    
+    def add_edge(self, u: Hashable, v: Hashable, attributes: Mapping | None = None) -> None:
+        """Adds edge if not present; errors if also present"""
+        if self.is_edge(u, v):
+            raise ValueError(f"Edge ({u}, {v}) already exists.")
+        self._edges[(u,v)] = attributes
+        self._neighbors[u].add(v)
+        self._num_edges += 1
+
