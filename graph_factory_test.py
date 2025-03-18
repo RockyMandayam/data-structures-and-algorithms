@@ -47,9 +47,9 @@ class TestGraphFactory:
             for node in range(k):
                 for other_node in range(node + 1, k):
                     if node != other_node:
-                        assert g.is_edge(node, other_node)
+                        assert g.is_edge((node, other_node))
                     else:
-                        assert not g.is_edge(node, other_node)
+                        assert not g.is_edge((node, other_node))
     
     def test_create_spindly_tree(self) -> None:
         # invalid k
@@ -70,9 +70,9 @@ class TestGraphFactory:
             for node in range(k):
                 for other_node in range(node + 1, k):
                     if node + 1 == other_node:
-                        assert g.is_edge(node, other_node)
+                        assert g.is_edge((node, other_node))
                     else:
-                        assert not g.is_edge(node, other_node)
+                        assert not g.is_edge((node, other_node))
     
     def test_create_b_ary_tree(self) -> None:
         # invalid b, depth
@@ -94,26 +94,21 @@ class TestGraphFactory:
         g = GraphFactory.create_b_ary_tree(2, 1)
         assert len(g) == 3
         assert g.num_edges() == 2
-        assert g.is_edge(0, 1)
-        assert g.is_edge(0, 2)
+        assert g.is_edge((0,1))
+        assert g.is_edge((0,2))
 
         # b=1, depth=2
         g = GraphFactory.create_b_ary_tree(1, 2)
         assert len(g) == 3
         assert g.num_edges() == 2
-        assert g.is_edge(0, 1)
-        assert g.is_edge(1, 2)
+        assert g.is_edge((0,1))
+        assert g.is_edge((1,2))
 
         # b=2, depth=2
         g = GraphFactory.create_b_ary_tree(2, 2)
         assert len(g) == 7
         assert g.num_edges() == 6
-        assert g.is_edge(0, 1)
-        assert g.is_edge(0, 2)
-        assert g.is_edge(1, 3)
-        assert g.is_edge(1, 4)
-        assert g.is_edge(2, 5)
-        assert g.is_edge(2, 6)
+        assert g.are_edges(((0,1), (0,2), (1,3), (1,4), (2,5), (2,6)))
 
         # test b and depth chosen at random in arbitrary range
         for b in (3, random.randint(4, 6)):

@@ -135,8 +135,9 @@ class Graph:
     def get_edges(self) -> Collection[Hashable]:
         return self._edges
     
-    def is_edge(self, u: Hashable, v: Hashable) -> bool:
-        """Returns True if (u,v) is an edge in this graph; False otherwise"""
+    def is_edge(self, edge: tuple[Hashable, Hashable]) -> bool:
+        """Returns True if edge= is an edge in this graph; False otherwise"""
+        u, v = edge
         if u not in self._neighbors:
             raise ValueError(f"Node {u} not found.")
         if v not in self._neighbors:
@@ -145,19 +146,19 @@ class Graph:
     
     def are_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> bool:
         """Returns True if all edges are in the graph; False otherwise"""
-        return all(self.is_edge(u, v) for u, v in edges)
+        return all(self.is_edge((u, v)) for u, v in edges)
     
     def add_node(self, node: Hashable, attributes: Mapping | None = None) -> None:
         """Adds node if not present and not None; errors if already present"""
         if node is None:
             raise ValueError("None is not a valid node.")
         if node in self._nodes:
-            raise ValueError("node already present in graph")
+            raise ValueError(f"Node {node=} already present in graph")
         self._nodes[node] = attributes
     
     def add_edge(self, u: Hashable, v: Hashable, attributes: Mapping | None = None) -> None:
         """Adds edge if not present; errors if also present"""
-        if self.is_edge(u, v):
+        if self.is_edge((u, v)):
             raise ValueError(f"Edge ({u}, {v}) already exists.")
         self._edges[(u,v)] = attributes
         self._neighbors[u].add(v)

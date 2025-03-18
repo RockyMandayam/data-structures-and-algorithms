@@ -52,11 +52,11 @@ class TestGraph:
         
         g = Graph(nodes=(1,))
         with pytest.raises(ValueError):
-            g.is_edge(2,1)
+            g.is_edge((2,1))
         with pytest.raises(ValueError):
-            g.is_edge(1,2)
+            g.is_edge((1,2))
         with pytest.raises(ValueError):
-            g.is_edge(2,3)
+            g.is_edge((2,3))
 
     @pytest.mark.parametrize("name", ("test_name", "", None))
     def test_empty_graph(self, name) -> None:
@@ -107,7 +107,7 @@ class TestGraph:
         g = Graph(nodes=nodes)
         assert len(g) == 1
         assert g.num_edges() == 0
-        assert not g.is_edge(1,1)
+        assert not g.is_edge((1,1))
         # note special case of singular 'node' (not 'nodes') for 1 node
         assert str(g) == f"Graph '' with 1 node and 0 edges"
         self._test_iter(g, 1)
@@ -141,9 +141,9 @@ class TestGraph:
         g = Graph(nodes=nodes)
         assert len(g) == 2
         assert g.num_edges() == 0
-        assert not g.is_edge(1,1)
-        assert not g.is_edge(2,2)
-        assert not g.is_edge(1,2)
+        assert not g.is_edge((1,1))
+        assert not g.is_edge((2,2))
+        assert not g.is_edge((1,2))
         assert str(g) == f"Graph '' with 2 nodes and 0 edges"
         self._test_iter(g, 2)
         assert 1 in g
@@ -181,10 +181,10 @@ class TestGraph:
         g = Graph(nodes=nodes, edges=edges, skip_duplicate_edges=True)
         assert len(g) == 2
         assert g.num_edges() == 1
-        assert g.is_edge(1,2)
-        assert g.is_edge(2,1)
-        assert not g.is_edge(1,1)
-        assert not g.is_edge(2,2)
+        assert g.is_edge((1,2))
+        assert g.is_edge((2,1))
+        assert not g.is_edge((1,1))
+        assert not g.is_edge((2,2))
         # note special case of singular 'edge' (not 'edges') for 1 edge
         assert str(g) == f"Graph '' with 2 nodes and 1 edge"
         self._test_iter(g, 2)
@@ -209,11 +209,11 @@ class TestGraph:
         g = Graph(nodes=nodes, edges=edges)
         assert len(g) == 7
         assert g.num_edges() == 4
-        assert g.is_edge(1, "test1")
-        assert g.is_edge(1, 2)
-        assert g.is_edge(2, "test1")
-        assert g.is_edge("a", ("a", "b", "c"))
-        assert not g.is_edge(1, "a")
+        assert g.is_edge((1, "test1"))
+        assert g.is_edge((1, 2))
+        assert g.is_edge((2, "test1"))
+        assert g.is_edge(("a", ("a", "b", "c")))
+        assert not g.is_edge((1, "a"))
         assert str(g) == f"Graph '' with 7 nodes and 4 edges"
         self._test_iter(g, 7)
         assert 1 in g
@@ -260,9 +260,9 @@ class TestGraph:
         for u in range(4):
             for v in range(4):
                 if (u,v) in ((1,2), (2,1), (2,3), (3,2)):
-                    assert g.is_edge(u, v)
+                    assert g.is_edge((u, v))
                 else:
-                    assert not g.is_edge(u, v)
+                    assert not g.is_edge((u, v))
         assert str(g) == f"Graph '' with 4 nodes and 2 edges"
         self._test_iter(g, 4)
         assert all(v in g for v in range(4))
