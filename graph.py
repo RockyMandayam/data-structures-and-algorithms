@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Hashable, Mapping, Iterator
+from collections.abc import Iterable, Hashable, Mapping, Iterator, Collection
 from typing import Any
 
 class Graph:
@@ -6,7 +6,9 @@ class Graph:
     
     At first, I was going to have nodes just be ints, but if I later want to have node attributes, that
     becomes annoying. I could create a node class, but I'm going to follow networkx library's approach of just having a node be
-    any hashable object (except that None is not allowed)
+    any hashable object (except that None is not allowed).
+
+    NOTE: for now, there is some "leakage" where mutable data can be exposed, e.g., via __iter__ and get_nodes.
 
     Restrictions:
         - No multple/parallel edges
@@ -141,9 +143,17 @@ class Graph:
     def __getitem__(self, node: Hashable) -> Iterable[Hashable]:
         return self._neighbors[node]
     
+    def get_nodes(self) -> Collection[Hashable]:
+        return self._nodes
+    
     def is_edge(self, u: Hashable, v: Hashable) -> bool:
+        """Returns True if (u,v) is an edge in this graph; False otherwise"""
         if u not in self._neighbors:
             raise ValueError(f"Node {u} not found.")
         if v not in self._neighbors:
             raise ValueError(f"Node {v} not found.")
         return v in self._neighbors[u] or u in self._neighbors[v]
+    
+    def are_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> bool:
+        """Returns True if all edges are in the graph; False otherwise"""
+        return all(self.is_edge(edge) for edge in edges)
