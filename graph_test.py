@@ -276,14 +276,14 @@ class TestGraph:
         # invalid edges
         g = Graph(nodes=4, edges=((1, 2),))
         with pytest.raises(ValueError):
-            g.add_edge(None, None)
+            g.add_edge((None, None))
         with pytest.raises(ValueError):
-            g.add_edge(1, 2)
+            g.add_edge((1, 2))
         with pytest.raises(ValueError):
-            g.add_edge(2, 1)
+            g.add_edge((2, 1))
 
         # valid edges
-        g.add_edge(2, 3)
+        g.add_edge((2, 3))
         assert len(g) == 4
         assert g.num_edges() == 2
         for u in range(4):
