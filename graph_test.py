@@ -1,13 +1,14 @@
-from collections.abc import Callable, Mapping, Iterable
 import random
+from collections.abc import Callable, Iterable, Mapping
 
 import pytest
 
 from graphs.graph import Graph
 
+
 class TestGraph:
     """Due to the nature fo this class, I think it makes more sense to test multiple functionalities in one test.
-    E.g., makes sense to test __init__, __len__, __contains__, num_edges, etc. at once for an empty graph instead of 
+    E.g., makes sense to test __init__, __len__, __contains__, num_edges, etc. at once for an empty graph instead of
     4 different functions. This is the approach taken in this test class for the following methods:
         - __init__
         - __len__
@@ -18,6 +19,7 @@ class TestGraph:
         - __getitem__
         - is_edge
     """
+
     # TODO test node and edge attributes
 
     def _test_iter(self, g: Graph, exp_cnt: int) -> None:
@@ -25,7 +27,7 @@ class TestGraph:
         for _ in g:
             cnt += 1
         assert cnt == exp_cnt
-    
+
     def test_init_invalid(self) -> None:
         # no None nodes or None edges, or edges referencing nonexistent nodes (including None nodes)
         # use iter() to make sure to try actual iterable non-sequences
@@ -39,24 +41,38 @@ class TestGraph:
         with pytest.raises(ValueError):
             Graph(nodes=-1)
         with pytest.raises(ValueError):
-            Graph(nodes=(1,), edges=((0,1),))
+            Graph(nodes=(1,), edges=((0, 1),))
         with pytest.raises(ValueError):
-            Graph(nodes=(1,), edges=((1,None),))
+            Graph(nodes=(1,), edges=((1, None),))
         # now test with combination of valid and invalid nodes, and same for edges
         with pytest.raises(ValueError):
             Graph(nodes=(1, 0, None))
         with pytest.raises(ValueError):
-            Graph(nodes=(0,1,2,), edges=((0,1), (0, None)))
+            Graph(
+                nodes=(
+                    0,
+                    1,
+                    2,
+                ),
+                edges=((0, 1), (0, None)),
+            )
         with pytest.raises(ValueError):
-            Graph(nodes=(0,1,2,), edges=((0,1), (0, -1)))
-        
+            Graph(
+                nodes=(
+                    0,
+                    1,
+                    2,
+                ),
+                edges=((0, 1), (0, -1)),
+            )
+
         g = Graph(nodes=(1,))
         with pytest.raises(ValueError):
-            g.is_edge((2,1))
+            g.is_edge((2, 1))
         with pytest.raises(ValueError):
-            g.is_edge((1,2))
+            g.is_edge((1, 2))
         with pytest.raises(ValueError):
-            g.is_edge((2,3))
+            g.is_edge((2, 3))
 
     @pytest.mark.parametrize("name", ("test_name", "", None))
     def test_empty_graph(self, name) -> None:
@@ -74,15 +90,15 @@ class TestGraph:
             g[-1]
         with pytest.raises(KeyError):
             g[None]
-    
+
     @pytest.mark.parametrize(
         ("nodes_iterable_factory", "edges_iterable_factory"),
         (
             (None, None),
             (lambda d: d.keys(), None),
             (tuple, lambda d: d.keys()),
-            (list, tuple)
-        )
+            (list, tuple),
+        ),
     )
     def test_nontrivial_graphs(
         self,
@@ -107,7 +123,7 @@ class TestGraph:
         g = Graph(nodes=nodes)
         assert len(g) == 1
         assert g.num_edges() == 0
-        assert not g.is_edge((1,1))
+        assert not g.is_edge((1, 1))
         # note special case of singular 'node' (not 'nodes') for 1 node
         assert str(g) == f"Graph '' with 1 node and 0 edges"
         self._test_iter(g, 1)
@@ -119,21 +135,21 @@ class TestGraph:
             g[2]
         with pytest.raises(KeyError):
             g[None]
-        
+
         ### test when nodes is an int
         g = Graph(nodes=1)
         assert len(g) == 1
         assert g.num_edges() == 0
         assert 0 in g
         assert 1 not in g
-        
+
         ### test with one node and self-loop
-        edges = {(1,1): {}}
+        edges = {(1, 1): {}}
         if edges_iterable_factory:
             edges = edges_iterable_factory(edges)
         with pytest.raises(ValueError):
             g = Graph(nodes=nodes, edges=edges)
-        
+
         ### test with two nodes
         nodes = {1: {}, 2: {}}
         if nodes_iterable_factory:
@@ -141,9 +157,9 @@ class TestGraph:
         g = Graph(nodes=nodes)
         assert len(g) == 2
         assert g.num_edges() == 0
-        assert not g.is_edge((1,1))
-        assert not g.is_edge((2,2))
-        assert not g.is_edge((1,2))
+        assert not g.is_edge((1, 1))
+        assert not g.is_edge((2, 2))
+        assert not g.is_edge((1, 2))
         assert str(g) == f"Graph '' with 2 nodes and 0 edges"
         self._test_iter(g, 2)
         assert 1 in g
@@ -156,23 +172,23 @@ class TestGraph:
             g[3]
         with pytest.raises(KeyError):
             g[None]
-        
+
         ### test with two nodes and an edge
         nodes = {1: {}, 2: {}}
         if nodes_iterable_factory:
             nodes = nodes_iterable_factory(nodes)
         # test edges referencing unknown nodes
-        edges = {(1,3): {}}
+        edges = {(1, 3): {}}
         if edges_iterable_factory:
             edges = edges_iterable_factory(edges)
         with pytest.raises(ValueError):
             g = Graph(nodes=nodes, edges=edges)
         # test "explicit" duplicate using iterable format
-        edges = ((1,2), (1,2))
+        edges = ((1, 2), (1, 2))
         with pytest.raises(ValueError):
             g = Graph(nodes=nodes, edges=edges)
         # test "duplicate" (reversed order) edge
-        edges = {(1,2): {}, (2,1): {}}
+        edges = {(1, 2): {}, (2, 1): {}}
         if edges_iterable_factory:
             edges = edges_iterable_factory(edges)
         with pytest.raises(ValueError):
@@ -181,10 +197,10 @@ class TestGraph:
         g = Graph(nodes=nodes, edges=edges, skip_duplicate_edges=True)
         assert len(g) == 2
         assert g.num_edges() == 1
-        assert g.is_edge((1,2))
-        assert g.is_edge((2,1))
-        assert not g.is_edge((1,1))
-        assert not g.is_edge((2,2))
+        assert g.is_edge((1, 2))
+        assert g.is_edge((2, 1))
+        assert not g.is_edge((1, 1))
+        assert not g.is_edge((2, 2))
         # note special case of singular 'edge' (not 'edges') for 1 edge
         assert str(g) == f"Graph '' with 2 nodes and 1 edge"
         self._test_iter(g, 2)
@@ -198,12 +214,25 @@ class TestGraph:
             g[3]
         with pytest.raises(KeyError):
             g[None]
-        
+
         ### test several nodes and edges
-        nodes = {1: {}, 2: {}, "test1": {}, ('a','b','c'): {}, 'a': {}, 'b': {}, 'c': {}}
+        nodes = {
+            1: {},
+            2: {},
+            "test1": {},
+            ("a", "b", "c"): {},
+            "a": {},
+            "b": {},
+            "c": {},
+        }
         if nodes_iterable_factory:
             nodes = nodes_iterable_factory(nodes)
-        edges = {(1, "test1"): {}, (2,1): {}, (2, "test1"): {}, ('a', ('a', 'b', 'c')): {}}
+        edges = {
+            (1, "test1"): {},
+            (2, 1): {},
+            (2, "test1"): {},
+            ("a", ("a", "b", "c")): {},
+        }
         if edges_iterable_factory:
             edges = edges_iterable_factory(edges)
         g = Graph(nodes=nodes, edges=edges)
@@ -218,20 +247,20 @@ class TestGraph:
         self._test_iter(g, 7)
         assert 1 in g
         assert "test1" in g
-        assert ('a', 'b', 'c') in g
-        assert 'a' in g
-        assert ('b', 'c') not in g
+        assert ("a", "b", "c") in g
+        assert "a" in g
+        assert ("b", "c") not in g
         assert None not in g
         assert len(g[1]) == 2
         assert len(g[2]) == 2
         assert len(g["test1"]) == 2
-        assert len(g['a']) == 1
-        assert len(g['b']) == 0
+        assert len(g["a"]) == 1
+        assert len(g["b"]) == 0
         with pytest.raises(KeyError):
-            g[('a',)]
+            g[("a",)]
         with pytest.raises(KeyError):
             g[None]
-    
+
     def test_add_node(self) -> None:
         # invalid nodes
         g = Graph()
@@ -240,26 +269,26 @@ class TestGraph:
         g.add_node(0)
         with pytest.raises(ValueError):
             g.add_node(0)
-        
+
         g.add_node(1)
-    
+
     def test_add_edge(self) -> None:
         # invalid edges
-        g = Graph(nodes=4, edges=((1,2),))
+        g = Graph(nodes=4, edges=((1, 2),))
         with pytest.raises(ValueError):
             g.add_edge(None, None)
         with pytest.raises(ValueError):
-            g.add_edge(1,2)
+            g.add_edge(1, 2)
         with pytest.raises(ValueError):
-            g.add_edge(2,1)
-        
+            g.add_edge(2, 1)
+
         # valid edges
-        g.add_edge(2,3)
+        g.add_edge(2, 3)
         assert len(g) == 4
         assert g.num_edges() == 2
         for u in range(4):
             for v in range(4):
-                if (u,v) in ((1,2), (2,1), (2,3), (3,2)):
+                if (u, v) in ((1, 2), (2, 1), (2, 3), (3, 2)):
                     assert g.is_edge((u, v))
                 else:
                     assert not g.is_edge((u, v))
@@ -271,5 +300,3 @@ class TestGraph:
         assert len(g[0]) == 0
         assert len(g[1]) == 1
         assert len(g[2]) == 2
-        
-
