@@ -13,7 +13,6 @@ class Order(Enum):
 # TODO: max_depth
 # TODO: goal neighbor
 # TODO: return paths
-# TODO: order of neighbors
 # TODO: from only one source
 def dfs_recursive(
     g: Graph,
