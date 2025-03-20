@@ -54,7 +54,6 @@ def test_dfs(recursive: bool) -> None:
     # generally: n node spindly tree
     for n in (2, 3, random.randint(4, MAX_TEST_GRAPH_SIZE)):
         g = GraphFactory.create_spindly_tree(n)
-        # need to specify order to have deterministic pre/post
         # in sorted order
         pre, post, parents = dfs(g, recursive=recursive, seed_order=Order.SORTED)
         assert pre == list(range(n)), n
@@ -138,6 +137,7 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [6, 2, 5, 0, 1, 4, 3]
     assert post == [5, 4, 3, 1, 0, 2, 6]
     assert parents == exp_parents
+    # starting from 1
     pre, post, parents = dfs(
         g,
         recursive=recursive,
@@ -240,7 +240,7 @@ def test_dfs(recursive: bool) -> None:
     exp_parents[11] = 7
     assert parents == exp_parents
 
-    ### arbitrary custom trees
+    ### arbitrary custom tree
     g = Graph(
         nodes=range(10),
         edges=((0, 1), (1, 2), (2, 3), (3, 4), (0, 5), (5, 6), (6, 7), (0, 8), (8, 9)),
