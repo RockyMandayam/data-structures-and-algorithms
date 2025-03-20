@@ -72,10 +72,9 @@ def test_dfs(recursive: bool) -> None:
         to_left = list(range(dfs_root - 1, -1, -1))  # from middle to the left
         to_right = list(range(dfs_root + 1, n))  # from middle to the right
         # important that dfs_root is first; everything else is irrelevant
-        seed_order = [dfs_root, *to_left, *to_right]
         # explore left then right
         pre, post, parents = dfs(
-            g, recursive=recursive, seed_order=seed_order, neighbor_order=Order.SORTED
+            g, recursive=recursive, seed_order=dfs_root, neighbor_order=Order.SORTED
         )
         assert pre == [dfs_root, *to_left, *to_right]
         assert post == [*to_left[::-1], *to_right[::-1], dfs_root]
@@ -89,7 +88,7 @@ def test_dfs(recursive: bool) -> None:
         pre, post, parents = dfs(
             g,
             recursive=recursive,
-            seed_order=seed_order,
+            seed_order=dfs_root,
             neighbor_order=Order.REVERSE_SORTED,
         )
         assert pre == [dfs_root, *to_right, *to_left]
