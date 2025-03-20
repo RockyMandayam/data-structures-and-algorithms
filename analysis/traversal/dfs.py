@@ -12,7 +12,6 @@ class Order(Enum):
 
 # TODO: max_depth
 # TODO: goal neighbor
-# TODO: return paths
 # TODO: allow specifying partial list of seed nodes?
 def dfs(
     g: Graph,
