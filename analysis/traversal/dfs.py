@@ -209,5 +209,7 @@ def _dfs_from_iterative(
         # we want to add to stack in reverse order of order of exploration
         for v in get_ordered_neighbors(g, u, neighbor_order)[::-1]:
             if v not in reached:
+                # NOTE: yes, parents can be set multiple times, but the last time will stick, as that gets
+                # popped off the stack first, and then after that we'll never reach this line again
                 parents[v] = u
                 to_explore.append(v)
