@@ -2,6 +2,7 @@ from collections.abc import Callable, Hashable, Mapping, Sequence
 from typing import Any
 
 from graphs.analysis.traversal.order import Order
+from graphs.analysis.traversal.utils import get_ordered_seed_nodes
 from graphs.graph import Graph
 
 
@@ -36,30 +37,8 @@ def dfs(
         Mapping[Hashable, Hashable]: path parents map, a map from each node to its parent in the DFS tree,
             or to None if it has no parent in the DFS tree (i.e., if it served as a seed node)
     """
-    # convert seed_order to list of nodes format
-    if isinstance(seed_order, Sequence) and (
-        len(seed_order) != len(g) or set(seed_order) != set(g.get_nodes())
-    ):
-        raise ValueError(
-            f"When providing seed_order as sequence, it must include every node in g exactly once. Received {seed_order=}. Expected {g.get_nodes()=}"
-        )
-    seed_nodes = list(g.get_nodes())
-    if seed_order is None:
-        pass
-    elif isinstance(seed_order, Order):
-        seed_nodes.sort(reverse=(seed_order == Order.REVERSE_SORTED))
-    elif isinstance(seed_order, Hashable):
-        seed_nodes = [
-            seed_order,
-            *[node for node in g.get_nodes() if node != seed_order],
-        ]
-    elif isinstance(seed_order, Sequence):
-        if len(seed_order) != len(g) or set(seed_order) != set(g.get_nodes()):
-            raise ValueError(
-                f"When providing seed_order as sequence, it must include every node in g exactly once. Received {seed_order=}. Expected {g.get_nodes()=}"
-            )
-        seed_nodes = seed_order
-    # initialize data structures and iterate through potential seed nodes, starting a dfs search from each one
+    seed_nodes = get_ordered_seed_nodes(g, seed_order)
+
     reached = set()
     preorder = []
     postorder = []
@@ -68,17 +47,17 @@ def dfs(
         if u not in reached:
             parents[u] = None
             if recursive:
-                _explore_recursive(
+                _dfs_from_recursive(
                     g, u, neighbor_order, reached, preorder, postorder, parents
                 )
             else:
-                _explore_iterative(
+                _dfs_from_iterative(
                     g, u, neighbor_order, reached, preorder, postorder, parents
                 )
     return preorder, postorder, parents
 
 
-def _explore_recursive(
+def _dfs_from_recursive(
     g: Graph,
     u: Hashable,
     neighbor_order: Order | None,
@@ -90,15 +69,15 @@ def _explore_recursive(
     """Recursive exploration
 
     NOTE: Instead of doing reached.add(u) as the first thing when you explore a node, you can instead do it before calling
-    _explore_recursive. So for v in vs, if v not in reached, first reached.add(v), then recursively call _explore_recursive.
+    _dfs_from_recursive. So for v in vs, if v not in reached, first reached.add(v), then recursively call _dfs_from_recursive.
         - Benefit: The benefit of this is that it better tracks with when we set parents (before we recurse).
-        - Drawback: Biggest drawback is that now you have to do a reached.add(u) before calling _explore_recursive at the
+        - Drawback: Biggest drawback is that now you have to do a reached.add(u) before calling _dfs_from_recursive at the
             higher level from dfs(). Also, this now tracks less well with when we add to preorder. We can also add to
             preorder when we recurse on neighbors, but then similarly we'll have to do preorder.append(u) before calling
-            _explore_recursive at the higher level from dfs()
+            _dfs_from_recursive at the higher level from dfs()
     So overall, these other schemes just don't work as nicely. So I'll keep reached and preorder where they are, and just
     know that the parents mapping is populated in a different way. Since the start node has no parent, you'd think we don't
-    need to modify the call to _explore_recursive from dfs(), but we do, in order to set its parent to None. Alternatively,
+    need to modify the call to _dfs_from_recursive from dfs(), but we do, in order to set its parent to None. Alternatively,
     you could just have it not be present in the mapping, but I'll just choose the convention that a start node's parent
     is None. At least this change is the same for the recursive and iterative implementations though!
     """
@@ -114,13 +93,13 @@ def _explore_recursive(
             print(v)
             print(g.is_edge((u, v)))
             parents[v] = u
-            _explore_recursive(
+            _dfs_from_recursive(
                 g, v, neighbor_order, reached, preorder, postorder, parents
             )
     postorder.append(u)
 
 
-def _explore_iterative(
+def _dfs_from_iterative(
     g: Graph,
     u: Hashable,
     neighbor_order: Order | None,
@@ -210,11 +189,11 @@ def _explore_iterative(
             - the double_visited set is only used for the iterative DFS implementation, not the recursive DFS impilementation. So do we create
                 a double_visited set up in the DFS function and only pass it in to the iterative version and not the recursive version? Well,
                 no. double_visited is used to differentiate reached from reached twice among a node and all its descendents in the DFS tree.
-                Note that _explore_iterative won't be called on an already reached node. It'll only be called on an unreached node. However,
-                with directed graphs, it's possible that a descendent of the start node of _explore_iterative is in fact already reached.
-                But in that case, that descendent will have also already been double_reached. By the end of a _explore_iterative call, any
+                Note that _dfs_from_iterative won't be called on an already reached node. It'll only be called on an unreached node. However,
+                with directed graphs, it's possible that a descendent of the start node of _dfs_from_iterative is in fact already reached.
+                But in that case, that descendent will have also already been double_reached. By the end of a _dfs_from_iterative call, any
                 node that is reached will also be double reached. So the DFS parent function can only use reached, and we can keep a separate
-                "local" double_reached set within _explore_iterative that other functions don't have to be aware of. But reached still needs
+                "local" double_reached set within _dfs_from_iterative that other functions don't have to be aware of. But reached still needs
                 to be shared.
         - TODO: check out https://www.youtube.com/watch?v=xLQKdq0Ffjg
     """
