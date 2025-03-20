@@ -11,23 +11,24 @@ from graphs.graph_factory import GraphFactory
 MAX_TEST_GRAPH_SIZE = 2**8
 
 
-def test_bfs() -> None:
+@pytest.mark.parametrize("use_approach_1", (True, False))
+def test_bfs(use_approach_1: bool) -> None:
     # non-comparable nodes
     g = Graph(nodes=(12, "blah"), edges=((12, "blah"),))
     with pytest.raises(TypeError):
-        bfs(g, seed_order=Order.SORTED)
+        bfs(g, use_approach_1=use_approach_1, seed_order=Order.SORTED)
 
     ### simple graphs
 
     # empty graph
     g = Graph()
-    level, parents = bfs(g)
+    level, parents = bfs(g, use_approach_1=use_approach_1)
     assert level == []
     assert parents == {}
 
     # singleton graph
     g = Graph(nodes=1)
-    level, parents = bfs(g)
+    level, parents = bfs(g, use_approach_1=use_approach_1)
     assert level == [0]
     assert parents == {0: None}
 
@@ -35,10 +36,12 @@ def test_bfs() -> None:
     for n in (2, 3, random.randint(4, MAX_TEST_GRAPH_SIZE)):
         g = Graph(nodes=n)
         # seeds in sorted order
-        level, parents = bfs(g, seed_order=Order.SORTED)
+        level, parents = bfs(g, use_approach_1=use_approach_1, seed_order=Order.SORTED)
         assert level == list(range(n)), n
         # seeds in reverse sorted order
-        level, parents = bfs(g, seed_order=Order.REVERSE_SORTED)
+        level, parents = bfs(
+            g, use_approach_1=use_approach_1, seed_order=Order.REVERSE_SORTED
+        )
         assert level == list(range(n - 1, -1, -1)), n
         assert parents == {u: None for u in range(n)}
 
@@ -48,11 +51,13 @@ def test_bfs() -> None:
     for n in (2, 3, random.randint(4, MAX_TEST_GRAPH_SIZE)):
         g = GraphFactory.create_spindly_tree(n)
         # in sorted order
-        level, parents = bfs(g, seed_order=Order.SORTED)
+        level, parents = bfs(g, use_approach_1=use_approach_1, seed_order=Order.SORTED)
         assert level == list(range(n)), n
         assert parents == {0: None, **{u: u - 1 for u in range(1, n)}}
         # in reverse sorted order
-        level, parents = bfs(g, seed_order=Order.REVERSE_SORTED)
+        level, parents = bfs(
+            g, use_approach_1=use_approach_1, seed_order=Order.REVERSE_SORTED
+        )
         assert level == list(range(n - 1, -1, -1)), n
         assert parents == {n - 1: None, **{u: u + 1 for u in range(n - 1)}}
         # branch from the middle
@@ -61,7 +66,12 @@ def test_bfs() -> None:
         to_right = list(range(bfs_root + 1, n))  # from middle to the right
         # important that bfs_root is first; everything else is irrelevant
         # explore left then right
-        level, parents = bfs(g, seed_order=bfs_root, neighbor_order=Order.SORTED)
+        level, parents = bfs(
+            g,
+            use_approach_1=use_approach_1,
+            seed_order=bfs_root,
+            neighbor_order=Order.SORTED,
+        )
         exp_level = [bfs_root]
         for dist in range(1, len(g)):
             left, right = bfs_root - dist, bfs_root + dist
@@ -79,6 +89,7 @@ def test_bfs() -> None:
         # explore right then left
         level, parents = bfs(
             g,
+            use_approach_1=use_approach_1,
             seed_order=bfs_root,
             neighbor_order=Order.REVERSE_SORTED,
         )
@@ -97,13 +108,19 @@ def test_bfs() -> None:
     # simple binary tree (see create_b_ary_tree docstring for example)
     g = GraphFactory.create_b_ary_tree(2, 2)
     # starting from 0, neighbors in sorted order
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == [0, 1, 2, 3, 4, 5, 6]
     exp_parents = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
     assert parents == exp_parents
     # starting from 0, neighbors in reverse order
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
         neighbor_order=Order.REVERSE_SORTED,
     )
@@ -112,6 +129,7 @@ def test_bfs() -> None:
     # starting from 6, neighbors in sorted order
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=Order.REVERSE_SORTED,
         neighbor_order=Order.SORTED,
     )
@@ -121,6 +139,7 @@ def test_bfs() -> None:
     # starting from 6, neighbors in reverse order
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=Order.REVERSE_SORTED,
         neighbor_order=Order.REVERSE_SORTED,
     )
@@ -129,6 +148,7 @@ def test_bfs() -> None:
     # starting from 1
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=1,
         neighbor_order=Order.SORTED,
     )
@@ -138,6 +158,7 @@ def test_bfs() -> None:
     # now neighbors in reverse order
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=1,
         neighbor_order=Order.REVERSE_SORTED,
     )
@@ -148,12 +169,18 @@ def test_bfs() -> None:
 
     # See 8 node binary example in create_nearly_spindly_b_ary_tree docstring
     g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 8)
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == list(range(8))
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
     # start from node 3 (arbitrarily chosen), neighbors in sorted order
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=3,
         neighbor_order=Order.SORTED,
     )
@@ -163,6 +190,7 @@ def test_bfs() -> None:
     # now with neighbors in reverse order
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=3,
         neighbor_order=Order.REVERSE_SORTED,
     )
@@ -171,12 +199,18 @@ def test_bfs() -> None:
 
     # Same with 9 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 9)
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == list(range(9))
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5, 8: 5}
     # start from node 8, neighbors in sorted order
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=8,
         neighbor_order=Order.SORTED,
     )
@@ -185,21 +219,36 @@ def test_bfs() -> None:
 
     # See 10 node 3-ary example in create_nearly_spindly_b_ary_tree docstring
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 10)
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == list(range(10))
     exp_parents = {0: None, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 4, 8: 4, 9: 4}
     assert parents == exp_parents
 
     # Same with 11 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 11)
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == list(range(11))
     exp_parents[10] = 7
     assert parents == exp_parents
 
     # Same with 12 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 12)
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == list(range(12))
     exp_parents[11] = 7
     assert parents == exp_parents
@@ -209,43 +258,71 @@ def test_bfs() -> None:
         nodes=range(10),
         edges=((0, 1), (1, 2), (2, 3), (3, 4), (0, 5), (5, 6), (6, 7), (0, 8), (8, 9)),
     )
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == [0, 1, 5, 8, 2, 6, 9, 3, 7, 4]
     assert parents == {0: None, 1: 0, 5: 0, 8: 0, 2: 1, 3: 2, 4: 3, 6: 5, 7: 6, 9: 8}
 
     # complete graphs (fully connected, so node 0 should just recurse fully in one pass)
     k = random.randint(4, 10)
     g = GraphFactory.create_complete_graph(k)
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == list(range(k))
     assert parents == {0: None, **{i: 0 for i in range(1, k)}}
 
     # look ahead graph (see example in create_look_ahead_graph docstring)
     g = GraphFactory.create_look_ahead_graph(5, 2)
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == [0, 1, 2, 3, 4]
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 2}
     # now start from 2
-    level, parents = bfs(g, seed_order=2, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g, use_approach_1=use_approach_1, seed_order=2, neighbor_order=Order.SORTED
+    )
     assert level == [2, 0, 1, 3, 4]
     assert parents == {2: None, 0: 2, 1: 2, 3: 2, 4: 2}
     # now start from 3
-    level, parents = bfs(g, seed_order=3, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g, use_approach_1=use_approach_1, seed_order=3, neighbor_order=Order.SORTED
+    )
     assert level == [3, 1, 2, 4, 0]
     assert parents == {3: None, 1: 3, 2: 3, 4: 3, 0: 1}
 
     # cycles
     g = GraphFactory.create_circuit(4)
     # start at 0, neighbors in sorted order
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == [0, 1, 3, 2]
     assert parents == {0: None, 1: 0, 3: 0, 2: 1}
     # start at 1, neighbors in sorted order
-    level, parents = bfs(g, seed_order=1, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g, use_approach_1=use_approach_1, seed_order=1, neighbor_order=Order.SORTED
+    )
     assert level == [1, 0, 2, 3]
     assert parents == {1: None, 0: 1, 2: 1, 3: 0}
     # start at 3, neighbors in sorted order
-    level, parents = bfs(g, seed_order=3, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g, use_approach_1=use_approach_1, seed_order=3, neighbor_order=Order.SORTED
+    )
     assert level == [3, 0, 2, 1]
     assert parents == {3: None, 0: 3, 2: 3, 1: 0}
 
@@ -267,12 +344,18 @@ def test_bfs() -> None:
         ),
     )
     # neighbors in order, so shorter cycle first
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == [0, 1, 3, 4, 8, 2, 5, 7, 6]
     assert parents == {0: None, 1: 0, 3: 0, 4: 0, 8: 0, 2: 1, 5: 4, 7: 8, 6: 5}
     # neighbors in reverse order, so larger cycle first, and in the opposite direction
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
         neighbor_order=Order.REVERSE_SORTED,
     )
@@ -281,6 +364,7 @@ def test_bfs() -> None:
     # now start at 8
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=8,
         neighbor_order=Order.REVERSE_SORTED,
     )
@@ -292,6 +376,7 @@ def test_bfs() -> None:
     g.add_edge((0, 9))
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=Order.REVERSE_SORTED,
         neighbor_order=Order.SORTED,
     )
@@ -326,6 +411,7 @@ def test_bfs() -> None:
     )
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=9,
         neighbor_order=Order.SORTED,
     )
@@ -401,7 +487,12 @@ def test_bfs() -> None:
             (13, 10),
         ),
     )
-    level, parents = bfs(g, seed_order=Order.SORTED, neighbor_order=Order.SORTED)
+    level, parents = bfs(
+        g,
+        use_approach_1=use_approach_1,
+        seed_order=Order.SORTED,
+        neighbor_order=Order.SORTED,
+    )
     assert level == [0, 1, 7, 2, 6, 3, 8, 10, 5, 4, 9, 11, 13, 12]
     assert parents == {
         0: None,
@@ -422,6 +513,7 @@ def test_bfs() -> None:
     }
     level, parents = bfs(
         g,
+        use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
         neighbor_order=Order.REVERSE_SORTED,
     )
@@ -496,6 +588,7 @@ def test_bfs() -> None:
         )
     level, parents = bfs(
         g_combined,
+        use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
         neighbor_order=Order.SORTED,
     )

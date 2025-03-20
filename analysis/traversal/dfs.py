@@ -134,6 +134,8 @@ def _dfs_from_iterative(
     node 1 (since you don't check if it's reached before adding it to the stack). And this will go on forever. Instead, you should not
     add node 1 to the stack after reaching node 2!
 
+    TODO: the "keep going down left, then, right, then all the way left, and etc." approach.
+
     What about postorder? Turns out this is quite tricky. There are a few ways to consider solving this problem. Let's go over them.
         - Can we get the postorder from the preorder?
             - In general, no.
