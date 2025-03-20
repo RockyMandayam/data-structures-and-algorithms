@@ -1,4 +1,4 @@
-from collections.abc import Callable, Hashable, Sequence
+from collections.abc import Callable, Hashable, Mapping, Sequence
 from enum import Enum, auto
 from typing import Any
 
@@ -20,7 +20,7 @@ def dfs(
     recursive: bool = False,
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
-) -> tuple[Sequence, Sequence]:
+) -> tuple[Sequence, Sequence, Mapping[Hashable, Hashable | None]]:
     """Depth first search (DFS) implementation.
 
     The recursive and iterative versions both have an inital overall "iterative" part, but beyond that they diverge
@@ -35,6 +35,12 @@ def dfs(
             - If Sequence[Hashable] (sequence of nodes), iterate in the order given by the sequence.
             - NOTE: If seed_order is Hashable and also Sequence[Hashable], it'll be interpreted as Hashable (node)
         neighbor_order: optional order in which to explore neighbors of a node; if not provided, undetermined order.
+
+    Returns:
+        Sequence: preorder corresponding to the particular traversal this DFS takes
+        Sequence: postorder corresponding to the same traversal
+        Mapping[Hashable, Hashable | None]: path parents map, a map from each node to its parent in the DFS tree,
+            or to None if it has no parent in the DFS tree
     """
     if isinstance(seed_order, Sequence) and (
         len(seed_order) != len(g) or set(seed_order) != set(g.get_nodes())
@@ -42,9 +48,6 @@ def dfs(
         raise ValueError(
             f"When providing seed_order as sequence, it must include every node in g exactly once. Received {seed_order=}. Expected {g.get_nodes()=}"
         )
-    reached = set()
-    preorder = []
-    postorder = []
     seed_nodes = list(g.get_nodes())
     if seed_order is None:
         pass
@@ -61,13 +64,22 @@ def dfs(
                 f"When providing seed_order as sequence, it must include every node in g exactly once. Received {seed_order=}. Expected {g.get_nodes()=}"
             )
         seed_nodes = seed_order
+    reached = set()
+    preorder = []
+    postorder = []
+    parents = {}
     for u in seed_nodes:
         if u not in reached:
+            parents[u] = None
             if recursive:
-                _explore_recursive(g, u, neighbor_order, reached, preorder, postorder)
+                _explore_recursive(
+                    g, u, neighbor_order, reached, preorder, postorder, parents
+                )
             else:
-                _explore_iterative(g, u, neighbor_order, reached, preorder, postorder)
-    return preorder, postorder
+                _explore_iterative(
+                    g, u, neighbor_order, reached, preorder, postorder, parents
+                )
+    return preorder, postorder, parents
 
 
 def _explore_recursive(
@@ -77,7 +89,23 @@ def _explore_recursive(
     reached: set,
     preorder: list[Hashable],
     postorder: list[Hashable],
+    parents: Mapping[Hashable, Hashable | None],
 ) -> None:
+    """Recursive exploration
+
+    NOTE: Instead of doing reached.add(u) as the first thing when you explore a node, you can instead do it before calling
+    _explore_recursive. So for v in vs, if v not in reached, first reached.add(v), then recursively call _explore_recursive.
+        - Benefit: The benefit of this is that it better tracks with when we set parents (before we recurse).
+        - Drawback: Biggest drawback is that now you have to do a reached.add(u) before calling _explore_recursive at the
+            higher level from dfs(). Also, this now tracks less well with when we add to preorder. We can also add to
+            preorder when we recurse on neighbors, but then similarly we'll have to do preorder.append(u) before calling
+            _explore_recursive at the higher level from dfs()
+    So overall, these other schemes just don't work as nicely. So I'll keep reached and preorder where they are, and just
+    know that the parents mapping is populated in a different way. Since the start node has no parent, you'd think we don't
+    need to modify the call to _explore_recursive from dfs(), but we do, in order to set its parent to None. Alternatively,
+    you could just have it not be present in the mapping, but I'll just choose the convention that a start node's parent
+    is None. At least this change is the same for the recursive and iterative implementations though!
+    """
     reached.add(u)
     preorder.append(u)
     vs = [v for v in g[u]]
@@ -85,7 +113,14 @@ def _explore_recursive(
         vs.sort(reverse=(neighbor_order == Order.REVERSE_SORTED))
     for v in vs:
         if v not in reached:
-            _explore_recursive(g, v, neighbor_order, reached, preorder, postorder)
+            print("###")
+            print(u)
+            print(v)
+            print(g.is_edge((u, v)))
+            parents[v] = u
+            _explore_recursive(
+                g, v, neighbor_order, reached, preorder, postorder, parents
+            )
     postorder.append(u)
 
 
@@ -96,6 +131,7 @@ def _explore_iterative(
     reached: set,
     preorder: list[Hashable],
     postorder: list[Hashable],
+    parents: Mapping[Hashable, Hashable | None],
 ) -> None:
     """Iterative implementation of DFS node exploration.
 
@@ -205,4 +241,5 @@ def _explore_iterative(
             vs.sort(reverse=(neighbor_order != Order.REVERSE_SORTED))
         for v in vs:
             if v not in reached:
+                parents[v] = u
                 to_explore.append(v)
