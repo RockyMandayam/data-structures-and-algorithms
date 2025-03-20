@@ -164,7 +164,7 @@ def _explore_iterative(
                 node that is reached will also be double reached. So the DFS parent function can only use reached, and we can keep a separate
                 "local" double_reached set within _explore_iterative that other functions don't have to be aware of. But reached still needs
                 to be shared.
-
+        - TODO: check out https://www.youtube.com/watch?v=xLQKdq0Ffjg
     """
     double_reached = set()
     to_explore = [u]
