@@ -20,7 +20,7 @@ def dfs(
     recursive: bool = False,
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
-) -> tuple[Sequence, Sequence, Mapping[Hashable, Hashable | None]]:
+) -> tuple[Sequence, Sequence, Mapping[Hashable, Hashable]]:
     """Depth first search (DFS) implementation.
 
     The recursive and iterative versions both have an inital overall "iterative" part, but beyond that they diverge
@@ -39,8 +39,8 @@ def dfs(
     Returns:
         Sequence: preorder corresponding to the particular traversal this DFS takes
         Sequence: postorder corresponding to the same traversal
-        Mapping[Hashable, Hashable | None]: path parents map, a map from each node to its parent in the DFS tree,
-            or to None if it has no parent in the DFS tree
+        Mapping[Hashable, Hashable]: path parents map, a map from each node to its parent in the DFS tree,
+            or to None if it has no parent in the DFS tree (i.e., if it served as a seed node)
     """
     if isinstance(seed_order, Sequence) and (
         len(seed_order) != len(g) or set(seed_order) != set(g.get_nodes())
@@ -89,7 +89,7 @@ def _explore_recursive(
     reached: set,
     preorder: list[Hashable],
     postorder: list[Hashable],
-    parents: Mapping[Hashable, Hashable | None],
+    parents: Mapping[Hashable, Hashable],
 ) -> None:
     """Recursive exploration
 
@@ -131,7 +131,7 @@ def _explore_iterative(
     reached: set,
     preorder: list[Hashable],
     postorder: list[Hashable],
-    parents: Mapping[Hashable, Hashable | None],
+    parents: Mapping[Hashable, Hashable],
 ) -> None:
     """Iterative implementation of DFS node exploration.
 
