@@ -13,18 +13,28 @@ class Order(Enum):
 # TODO: max_depth
 # TODO: goal neighbor
 # TODO: return paths
-# TODO: from only one source
+# TODO: allow specifying partial list of seed nodes?
 def dfs(
     g: Graph,
     *,
     recursive: bool = False,
-    seed_order: Order | Sequence[Hashable] | None = None,
+    seed_order: Order | Hashable | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
 ) -> tuple[Sequence, Sequence]:
     """Depth first search (DFS) implementation.
 
     The recursive and iterative versions both have an inital overall "iterative" part, but beyond that they diverge
     when starting to explore a node.
+
+    Args:
+        g: Graph on which to perform DFS
+        recursive: if True, use recursive DFS implementation; otherwise, use iterative DFS implementation
+        seed_order: Order in which to iterate through potential start nodes for DFS exploration.
+            - If Order, iterate through potential in the given Order
+            - If non-Sequence Hashable, first start with the given Hashable (node); rest of order is undetermined
+            - If Sequence[Hashable] (sequence of nodes), iterate in the order given by the sequence.
+            - NOTE: If seed_order is Hashable and also Sequence[Hashable], it'll be interpreted as Hashable (node)
+        neighbor_order: optional order in which to explore neighbors of a node; if not provided, undetermined order.
     """
     if isinstance(seed_order, Sequence) and (
         len(seed_order) != len(g) or set(seed_order) != set(g.get_nodes())
@@ -35,12 +45,22 @@ def dfs(
     reached = set()
     preorder = []
     postorder = []
-    if isinstance(seed_order, Sequence):
+    seed_nodes = list(g.get_nodes())
+    if seed_order is None:
+        pass
+    elif isinstance(seed_order, Order):
+        seed_nodes.sort(reverse=(seed_order == Order.REVERSE_SORTED))
+    elif isinstance(seed_order, Hashable):
+        seed_nodes = [
+            seed_order,
+            *[node for node in g.get_nodes() if node != seed_order],
+        ]
+    elif isinstance(seed_order, Sequence):
+        if len(seed_order) != len(g) or set(seed_order) != set(g.get_nodes()):
+            raise ValueError(
+                f"When providing seed_order as sequence, it must include every node in g exactly once. Received {seed_order=}. Expected {g.get_nodes()=}"
+            )
         seed_nodes = seed_order
-    else:
-        seed_nodes = list(g.get_nodes())
-        if seed_order:
-            seed_nodes.sort(reverse=(seed_order == Order.REVERSE_SORTED))
     for u in seed_nodes:
         if u not in reached:
             if recursive:

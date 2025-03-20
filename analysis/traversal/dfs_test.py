@@ -116,12 +116,10 @@ def test_dfs(recursive: bool) -> None:
     )
     assert pre == [6, 2, 5, 0, 1, 4, 3]
     assert post == [5, 4, 3, 1, 0, 2, 6]
-    # start from node 1 (arbitrarily chosen), neighbors in sorted order
-    # what's important in seed_order is that 1 comes first, order of the rest doesn't matter
     pre, post = dfs(
         g,
         recursive=recursive,
-        seed_order=[1, 0, 2, 3, 4, 5, 6],
+        seed_order=1,
         neighbor_order=Order.SORTED,
     )
     assert pre == [1, 0, 2, 5, 6, 3, 4]
@@ -130,7 +128,7 @@ def test_dfs(recursive: bool) -> None:
     pre, post = dfs(
         g,
         recursive=recursive,
-        seed_order=[1, 0, 2, 3, 4, 5, 6],
+        seed_order=1,
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert pre == [1, 4, 3, 0, 2, 6, 5]
@@ -149,7 +147,7 @@ def test_dfs(recursive: bool) -> None:
     pre, post = dfs(
         g,
         recursive=recursive,
-        seed_order=[3, 0, 1, 2, 4, 5, 6, 7],
+        seed_order=3,
         neighbor_order=Order.SORTED,
     )
     assert pre == [3, 1, 0, 2, 4, 5, 7, 6]
@@ -158,7 +156,7 @@ def test_dfs(recursive: bool) -> None:
     pre, post = dfs(
         g,
         recursive=recursive,
-        seed_order=[3, 0, 1, 2, 4, 5, 6, 7],
+        seed_order=3,
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert pre == [3, 6, 5, 7, 1, 4, 0, 2]
@@ -175,7 +173,7 @@ def test_dfs(recursive: bool) -> None:
     pre, post = dfs(
         g,
         recursive=recursive,
-        seed_order=[8, 0, 1, 2, 3, 4, 5, 6, 7],
+        seed_order=8,
         neighbor_order=Order.SORTED,
     )
     assert pre == [8, 5, 3, 1, 0, 2, 4, 6, 7]
@@ -234,15 +232,11 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 2, 3, 4]
     assert post == pre[::-1]
     # now start from 2
-    pre, post = dfs(
-        g, recursive=recursive, seed_order=[2, 0, 1, 3, 4], neighbor_order=Order.SORTED
-    )
+    pre, post = dfs(g, recursive=recursive, seed_order=2, neighbor_order=Order.SORTED)
     assert pre == [2, 0, 1, 3, 4]
     assert post == pre[::-1]
     # now start from 3
-    pre, post = dfs(
-        g, recursive=recursive, seed_order=[3, 0, 1, 2, 4], neighbor_order=Order.SORTED
-    )
+    pre, post = dfs(g, recursive=recursive, seed_order=3, neighbor_order=Order.SORTED)
     assert pre == [3, 1, 0, 2, 4]
     assert post == pre[::-1]
 
@@ -255,15 +249,11 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 2, 3]
     assert post == pre[::-1]
     # start at 1, neighbors in sorted order
-    pre, post = dfs(
-        g, recursive=recursive, seed_order=[1, 0, 2, 3], neighbor_order=Order.SORTED
-    )
+    pre, post = dfs(g, recursive=recursive, seed_order=1, neighbor_order=Order.SORTED)
     assert pre == [1, 0, 3, 2]
     assert post == pre[::-1]
     # start at 3, neighbors in sorted order
-    pre, post = dfs(
-        g, recursive=recursive, seed_order=[3, 0, 1, 2], neighbor_order=Order.SORTED
-    )
+    pre, post = dfs(g, recursive=recursive, seed_order=3, neighbor_order=Order.SORTED)
     assert pre == [3, 0, 1, 2]
     assert post == pre[::-1]
 
@@ -303,7 +293,7 @@ def test_dfs(recursive: bool) -> None:
     pre, post = dfs(
         g,
         recursive=recursive,
-        seed_order=[8, 0, 1, 2, 3, 4, 5, 6, 7],
+        seed_order=8,
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert pre == [8, 7, 6, 5, 4, 0, 3, 2, 1]
@@ -351,7 +341,7 @@ def test_dfs(recursive: bool) -> None:
     pre, post = dfs(
         g,
         recursive=recursive,
-        seed_order=[9, *range(9), *range(10, 21)],
+        seed_order=9,
         neighbor_order=Order.SORTED,
     )
     assert pre == [
