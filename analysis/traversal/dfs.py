@@ -150,6 +150,11 @@ def _explore_iterative(
                         instant lookup and one is good for returning an order
                     - Minor implementation detail: I think you could use a visited_count dict that counts whether it's been visited 0, 1, or 2
                         times, instead of two sets. Idk if it's easier/more elegant or less so... just a thought.
+                    - Another minor implementation detail is you can do a peek followed by a pop sometimes instead of a pop followed by a
+                        re-append sometimes.
+                    - There's also a way to not use a double_visited list but instead, when a node is already reached, just check whether all
+                        its neighbors are already reached. But, of course, this is just slower. double_visited just makes this check constant
+                        time basically.
             - the double_visited set is only used for the iterative DFS implementation, not the recursive DFS impilementation. So do we create
                 a double_visited set up in the DFS function and only pass it in to the iterative version and not the recursive version? Well,
                 no. double_visited is used to differentiate reached from reached twice among a node and all its descendents in the DFS tree.
@@ -159,6 +164,7 @@ def _explore_iterative(
                 node that is reached will also be double reached. So the DFS parent function can only use reached, and we can keep a separate
                 "local" double_reached set within _explore_iterative that other functions don't have to be aware of. But reached still needs
                 to be shared.
+
     """
     double_reached = set()
     to_explore = [u]
