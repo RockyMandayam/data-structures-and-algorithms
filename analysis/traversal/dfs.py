@@ -2,7 +2,10 @@ from collections.abc import Callable, Hashable, Mapping, Sequence
 from typing import Any
 
 from graphs.analysis.traversal.order import Order
-from graphs.analysis.traversal.utils import get_ordered_seed_nodes
+from graphs.analysis.traversal.utils import (
+    get_ordered_neighbors,
+    get_ordered_seed_nodes,
+)
 from graphs.graph import Graph
 
 
@@ -15,7 +18,7 @@ def dfs(
     recursive: bool = False,
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
-) -> tuple[Sequence, Sequence, Mapping[Hashable, Hashable]]:
+) -> tuple[list[Hashable], list[Hashable], dict[Hashable, Hashable]]:
     """Depth first search (DFS) implementation.
 
     The recursive and iterative versions both have an inital overall "iterative" part, but beyond that they diverge
@@ -32,9 +35,9 @@ def dfs(
         neighbor_order: optional order in which to explore neighbors of a node; if not provided, undetermined order.
 
     Returns:
-        Sequence: preorder corresponding to the particular traversal this DFS takes
-        Sequence: postorder corresponding to the same traversal
-        Mapping[Hashable, Hashable]: path parents map, a map from each node to its parent in the DFS tree,
+        list[Hashable]: preorder corresponding to the particular traversal this DFS takes
+        list[Hashable]: postorder corresponding to the same traversal
+        dict[Hashable, Hashable]: path parents map, a map from each node to its parent in the DFS tree,
             or to None if it has no parent in the DFS tree (i.e., if it served as a seed node)
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
@@ -64,7 +67,7 @@ def _dfs_from_recursive(
     reached: set,
     preorder: list[Hashable],
     postorder: list[Hashable],
-    parents: Mapping[Hashable, Hashable],
+    parents: dict[Hashable, Hashable],
 ) -> None:
     """Recursive exploration
 
@@ -83,15 +86,8 @@ def _dfs_from_recursive(
     """
     reached.add(u)
     preorder.append(u)
-    vs = [v for v in g[u]]
-    if neighbor_order:
-        vs.sort(reverse=(neighbor_order == Order.REVERSE_SORTED))
-    for v in vs:
+    for v in get_ordered_neighbors(g, u, neighbor_order):
         if v not in reached:
-            print("###")
-            print(u)
-            print(v)
-            print(g.is_edge((u, v)))
             parents[v] = u
             _dfs_from_recursive(
                 g, v, neighbor_order, reached, preorder, postorder, parents
@@ -106,7 +102,7 @@ def _dfs_from_iterative(
     reached: set,
     preorder: list[Hashable],
     postorder: list[Hashable],
-    parents: Mapping[Hashable, Hashable],
+    parents: dict[Hashable, Hashable],
 ) -> None:
     """Iterative implementation of DFS node exploration.
 
@@ -210,11 +206,8 @@ def _dfs_from_iterative(
         to_explore.append(u)  # this is only used for postorder
         reached.add(u)
         preorder.append(u)
-        vs = [v for v in g[u]]
-        if neighbor_order:
-            # we want to add to stack in reverse order of order of exploration
-            vs.sort(reverse=(neighbor_order != Order.REVERSE_SORTED))
-        for v in vs:
+        # we want to add to stack in reverse order of order of exploration
+        for v in get_ordered_neighbors(g, u, neighbor_order)[::-1]:
             if v not in reached:
                 parents[v] = u
                 to_explore.append(v)

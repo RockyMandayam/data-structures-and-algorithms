@@ -4,6 +4,15 @@ from graphs.analysis.traversal.order import Order
 from graphs.graph import Graph
 
 
+def get_ordered_neighbors(
+    g: Graph, u: Hashable, neighbor_order: Order | None
+) -> list[Hashable]:
+    vs = [v for v in g[u]]
+    if neighbor_order:
+        vs.sort(reverse=(neighbor_order == Order.REVERSE_SORTED))
+    return vs
+
+
 def get_ordered_seed_nodes(
     g: Graph, seed_order: Order | Hashable | Sequence[Hashable] | None
 ) -> list[Hashable]:
