@@ -41,6 +41,7 @@ def dfs(
         Mapping[Hashable, Hashable]: path parents map, a map from each node to its parent in the DFS tree,
             or to None if it has no parent in the DFS tree (i.e., if it served as a seed node)
     """
+    # convert seed_order to list of nodes format
     if isinstance(seed_order, Sequence) and (
         len(seed_order) != len(g) or set(seed_order) != set(g.get_nodes())
     ):
@@ -63,6 +64,7 @@ def dfs(
                 f"When providing seed_order as sequence, it must include every node in g exactly once. Received {seed_order=}. Expected {g.get_nodes()=}"
             )
         seed_nodes = seed_order
+    # initialize data structures and iterate through potential seed nodes, starting a dfs search from each one
     reached = set()
     preorder = []
     postorder = []
