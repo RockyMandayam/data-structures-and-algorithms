@@ -1,13 +1,8 @@
 from collections.abc import Callable, Hashable, Mapping, Sequence
-from enum import Enum, auto
 from typing import Any
 
+from graphs.analysis.traversal.order import Order
 from graphs.graph import Graph
-
-
-class Order(Enum):
-    SORTED = auto()
-    REVERSE_SORTED = auto()
 
 
 # TODO: max_depth

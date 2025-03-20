@@ -2,7 +2,8 @@ import random
 
 import pytest
 
-from graphs.analysis.traversal.dfs import Order, dfs
+from graphs.analysis.traversal.dfs import dfs
+from graphs.analysis.traversal.order import Order
 from graphs.graph import Graph
 from graphs.graph_factory import GraphFactory
 
