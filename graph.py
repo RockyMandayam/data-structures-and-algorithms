@@ -182,7 +182,7 @@ class Graph:
         return f"Graph '{self.name}' with {num_nodes} node{'s' if num_nodes != 1 else ''} and {self.num_edges()} edge{'s' if self.num_edges() != 1 else ''}"
 
     def __iter__(self) -> Iterator:
-        return iter(self._nodes)
+        return iter(self.get_nodes())
 
     def __contains__(self, node: Hashable) -> bool:
         return node in self._nodes
