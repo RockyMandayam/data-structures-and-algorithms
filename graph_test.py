@@ -12,13 +12,14 @@ class TestGraph:
     4 different functions. This is the approach taken in this test class for the following methods:
         - __init__
         - __len__
+        - get_nodes
+        - is_edge
+        - are_edges
         - num_edges
         - __str__
         - __iter__
         - __contains__
         - __getitem__
-        - is_edge
-        - get_nodes
     """
 
     # TODO test node and edge attributes
@@ -74,6 +75,13 @@ class TestGraph:
             g.is_edge((1, 2))
         with pytest.raises(ValueError):
             g.is_edge((2, 3))
+        with pytest.raises(ValueError):
+            g.is_edge((None, 0))
+        with pytest.raises(ValueError):
+            g.is_edge((0, None))
+        assert g.are_edges([])
+        with pytest.raises(ValueError):
+            g.are_edges([(1, 2)])
 
     @pytest.mark.parametrize("name", ("test_name", "", None))
     def test_empty_graph(self, name) -> None:
@@ -82,6 +90,10 @@ class TestGraph:
         assert len(g) == 0
         assert g.num_edges() == 0
         assert len(g.get_nodes()) == 0
+        with pytest.raises(ValueError):
+            g.is_edge((0, 1))
+        with pytest.raises(ValueError):
+            g.are_edges([(0, 1)])
         name_str = name or ""
         assert str(g) == f"Graph '{name_str}' with 0 nodes and 0 edges"
         self._test_iter(g, 0)
@@ -127,6 +139,7 @@ class TestGraph:
         assert tuple(g.get_nodes()) == (1,)
         assert g.num_edges() == 0
         assert not g.is_edge((1, 1))
+        assert not g.are_edges([(1, 1)])
         # note special case of singular 'node' (not 'nodes') for 1 node
         assert str(g) == f"Graph '' with 1 node and 0 edges"
         self._test_iter(g, 1)
@@ -207,6 +220,9 @@ class TestGraph:
         assert g.is_edge((2, 1))
         assert not g.is_edge((1, 1))
         assert not g.is_edge((2, 2))
+        assert g.are_edges([(1, 2), (2, 1)])
+        assert g.are_edges([(1, 2), (2, 1), (1, 2)])
+        assert not g.are_edges([(1, 2), (1, 1)])
         # note special case of singular 'edge' (not 'edges') for 1 edge
         assert str(g) == f"Graph '' with 2 nodes and 1 edge"
         self._test_iter(g, 2)
@@ -252,6 +268,8 @@ class TestGraph:
         assert g.is_edge((2, "test1"))
         assert g.is_edge(("a", ("a", "b", "c")))
         assert not g.is_edge((1, "a"))
+        assert g.are_edges([(1, 2), ("a", ("a", "b", "c"))])
+        assert not g.are_edges([("a", 2), (1, 2)])
         assert str(g) == f"Graph '' with 7 nodes and 4 edges"
         self._test_iter(g, 7)
         assert 1 in g
@@ -276,10 +294,15 @@ class TestGraph:
         with pytest.raises(ValueError):
             g.add_node(None)
         g.add_node(0)
+        assert len(g) == 1
+        assert 0 in g
         with pytest.raises(ValueError):
             g.add_node(0)
-
         g.add_node(1)
+        assert len(g) == 2
+        assert 0 in g
+        assert 1 in g
+        self._test_iter(g, 2)
 
     def test_add_edge(self) -> None:
         # invalid edges
@@ -302,6 +325,8 @@ class TestGraph:
                     assert g.is_edge((u, v))
                 else:
                     assert not g.is_edge((u, v))
+        assert g.are_edges([(2, 3)])
+        assert not g.are_edges([(2, 3), (3, 1)])
         assert str(g) == f"Graph '' with 4 nodes and 2 edges"
         self._test_iter(g, 4)
         assert all(v in g for v in range(4))
