@@ -45,7 +45,7 @@ class Graph:
         self._edges = Graph._construct_and_validate_edges(
             self._nodes, edges, skip_duplicate_edges
         )
-        self._neighbors = Graph._construct_neighbors(self._nodes, self._edges)
+        self._incident_edges = Graph._construct_incident_edges(self._nodes, self._edges)
 
     @staticmethod
     def _construct_and_validate_nodes(
@@ -149,14 +149,15 @@ class Graph:
         return edges
 
     @staticmethod
-    def _construct_neighbors(
+    def _construct_incident_edges(
         nodes: Mapping[Hashable, Mapping],
         edges: Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]],
     ) -> Mapping[Hashable, set]:
         neighbors: Mapping[Hashable, set] = {node: set() for node in nodes}
         for u, v in edges:
-            neighbors[u].add(v)
-            neighbors[v].add(u)
+            neighbors[u].add((u, v))
+            # don't reverse order (u,v vs v,u) - keep one consistent grouth truth for edge in self._edges
+            neighbors[v].add((u, v))
         return neighbors
 
     def get_node_attrs(self, node: Hashable) -> Mapping:
@@ -181,20 +182,29 @@ class Graph:
         return f"Graph '{self.name}' with {num_nodes} node{'s' if num_nodes != 1 else ''} and {self.num_edges()} edge{'s' if self.num_edges() != 1 else ''}"
 
     def __iter__(self) -> Iterator:
-        return iter(self._nodes)
+        return iter(self.get_nodes())
 
     def __contains__(self, node: Hashable) -> bool:
         return node in self._nodes
 
     def __getitem__(self, node: Hashable) -> Iterable[Hashable]:
-        # KeyError desired if node not in self._neighbors
-        return self._neighbors[node]
+        # KeyError desired if node not in self._incident_edges
+        neighbors = []
+        for u, v in self._incident_edges[node]:
+            neighbors.append(v if u == node else u)
+        return neighbors
 
     def get_nodes(self) -> Collection[Hashable]:
         return self._nodes
 
-    def get_edges(self) -> Collection[tuple[Hashable, Hashable]]:
-        return self._edges
+    def get_edges(self, node: Hashable = None) -> Collection[tuple[Hashable, Hashable]]:
+        """If node is not None, gets all edges incident on node; otherwise, gets all edges in graph.
+
+        Since nodes are not allowed to be None, None is used to request for all edges in the graph.
+        """
+        if node is None:
+            return self._edges
+        return self._incident_edges[node]
 
     def is_edge(self, edge: tuple[Hashable, Hashable]) -> bool:
         """Returns True if edge= is an edge in this graph; False otherwise"""
@@ -209,6 +219,13 @@ class Graph:
         """Returns True if all edges are in the graph; False otherwise"""
         return all(self.is_edge((u, v)) for u, v in edges)
 
+    def get_weight(self, edge: tuple[Hashable, Hashable]) -> None:
+        if not self.is_edge(edge):
+            raise ValueError(f"Unknown edge {edge=}")
+        if (v, u) in self._edges:
+            u, v = v, u
+        return self._edges[(u, v)][0]
+
     def add_node(self, node: Hashable, attributes: Mapping | None = None) -> None:
         """Adds node if not present and not None; errors if already present"""
         if node is None:
@@ -216,7 +233,7 @@ class Graph:
         if node in self._nodes:
             raise ValueError(f"Node {node=} already present in graph")
         self._nodes[node] = attributes
-        self._neighbors[node] = set()
+        self._incident_edges[node] = set()
 
     def add_nodes(self, nodes: Iterable[Hashable]) -> None:
         for node in nodes:
@@ -231,11 +248,11 @@ class Graph:
             raise ValueError(f"Unknown node {u=}")
         if v not in self._nodes:
             raise ValueError(f"Unknown node {v=}")
-        if self.is_edge((u, v)):
+        if self.is_edge(edge):
             raise ValueError(f"Edge ({u}, {v}) already exists.")
-        self._edges[(u, v)] = attributes
-        self._neighbors[u].add(v)
-        self._neighbors[v].add(u)
+        self._edges[edge] = attributes
+        self._incident_edges[u].add(edge)
+        self._incident_edges[v].add(edge)
 
     def add_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> None:
         for edge in edges:
