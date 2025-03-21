@@ -219,6 +219,13 @@ class Graph:
         """Returns True if all edges are in the graph; False otherwise"""
         return all(self.is_edge((u, v)) for u, v in edges)
 
+    def get_weight(self, edge: tuple[Hashable, Hashable]) -> None:
+        if not self.is_edge(edge):
+            raise ValueError(f"Unknown edge {edge=}")
+        if (v, u) in self._edges:
+            u, v = v, u
+        return self._edges[(u, v)][0]
+
     def add_node(self, node: Hashable, attributes: Mapping | None = None) -> None:
         """Adds node if not present and not None; errors if already present"""
         if node is None:
