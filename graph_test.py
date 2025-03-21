@@ -18,6 +18,7 @@ class TestGraph:
         - __contains__
         - __getitem__
         - is_edge
+        - get_nodes
     """
 
     # TODO test node and edge attributes
@@ -80,6 +81,7 @@ class TestGraph:
         g = Graph(name=name)
         assert len(g) == 0
         assert g.num_edges() == 0
+        assert len(g.get_nodes()) == 0
         name_str = name or ""
         assert str(g) == f"Graph '{name_str}' with 0 nodes and 0 edges"
         self._test_iter(g, 0)
@@ -122,6 +124,7 @@ class TestGraph:
             nodes = nodes_iterable_factory(nodes)
         g = Graph(nodes=nodes)
         assert len(g) == 1
+        assert tuple(g.get_nodes()) == (1,)
         assert g.num_edges() == 0
         assert not g.is_edge((1, 1))
         # note special case of singular 'node' (not 'nodes') for 1 node
@@ -139,6 +142,7 @@ class TestGraph:
         ### test when nodes is an int
         g = Graph(nodes=1)
         assert len(g) == 1
+        assert tuple(g.get_nodes()) == (0,)
         assert g.num_edges() == 0
         assert 0 in g
         assert 1 not in g
@@ -156,6 +160,7 @@ class TestGraph:
             nodes = nodes_iterable_factory(nodes)
         g = Graph(nodes=nodes)
         assert len(g) == 2
+        assert sorted(g.get_nodes()) == [1, 2]
         assert g.num_edges() == 0
         assert not g.is_edge((1, 1))
         assert not g.is_edge((2, 2))
@@ -196,6 +201,7 @@ class TestGraph:
         # now allow it by enabling skip_duplicate_edges
         g = Graph(nodes=nodes, edges=edges, skip_duplicate_edges=True)
         assert len(g) == 2
+        assert sorted(g.get_nodes()) == [1, 2]
         assert g.num_edges() == 1
         assert g.is_edge((1, 2))
         assert g.is_edge((2, 1))
@@ -237,6 +243,9 @@ class TestGraph:
             edges = edges_sequence_factory(edges)
         g = Graph(nodes=nodes, edges=edges)
         assert len(g) == 7
+        assert len(g.get_nodes()) == 7 and set(g.get_nodes()) == set(
+            (1, 2, "test1", ("a", "b", "c"), "a", "b", "c")
+        )
         assert g.num_edges() == 4
         assert g.is_edge((1, "test1"))
         assert g.is_edge((1, 2))
@@ -285,6 +294,7 @@ class TestGraph:
         # valid edges
         g.add_edge((2, 3))
         assert len(g) == 4
+        assert sorted(g.get_nodes()) == [0, 1, 2, 3]
         assert g.num_edges() == 2
         for u in range(4):
             for v in range(4):
