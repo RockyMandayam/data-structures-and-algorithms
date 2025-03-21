@@ -38,10 +38,10 @@ def bfs(
     for u in seed_nodes:
         if u not in reached:
             parents[u] = None
-            if use_approach_1:
-                _bfs_from_approach_1(g, u, neighbor_order, reached, levelorder, parents)
-            else:
-                _bfs_from_approach_2(g, u, neighbor_order, reached, levelorder, parents)
+            _bfs_from: Callable = (
+                _bfs_from_approach_1 if use_approach_1 else _bfs_from_approach_2
+            )
+            _bfs_from(g, u, neighbor_order, reached, levelorder, parents)
     return levelorder, parents
 
 

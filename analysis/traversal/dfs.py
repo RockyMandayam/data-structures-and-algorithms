@@ -49,14 +49,10 @@ def dfs(
     for u in seed_nodes:
         if u not in reached:
             parents[u] = None
-            if recursive:
-                _dfs_from_recursive(
-                    g, u, neighbor_order, reached, preorder, postorder, parents
-                )
-            else:
-                _dfs_from_iterative(
-                    g, u, neighbor_order, reached, preorder, postorder, parents
-                )
+            _dfs_from: Callable = (
+                _dfs_from_recursive if recursive else _dfs_from_iterative
+            )
+            _dfs_from(g, u, neighbor_order, reached, preorder, postorder, parents)
     return preorder, postorder, parents
 
 
