@@ -52,7 +52,12 @@ def dfs(
             _dfs_from: Callable = (
                 _dfs_from_recursive if recursive else _dfs_from_iterative
             )
-            _dfs_from(g, u, neighbor_order, reached, preorder, postorder, parents)
+            preorder_from_u, postorder_from_u, parents_from_u = _dfs_from(
+                g, u, neighbor_order, reached
+            )
+            preorder.extend(preorder_from_u)
+            postorder.extend(postorder_from_u)
+            parents.update(parents_from_u)
     return preorder, postorder, parents
 
 
@@ -61,10 +66,7 @@ def _dfs_from_recursive(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-    preorder: list[Hashable],
-    postorder: list[Hashable],
-    parents: dict[Hashable, Hashable],
-) -> None:
+) -> tuple[list[Hashable], dict[Hashable, Hashable], dict[Hashable, Hashable]]:
     """Recursive exploration
 
     NOTE: Instead of doing reached.add(u) as the first thing when you explore a node, you can instead do it before calling
@@ -81,14 +83,21 @@ def _dfs_from_recursive(
     is None. At least this change is the same for the recursive and iterative implementations though!
     """
     reached.add(u)
-    preorder.append(u)
+    preorder = [u]
+    postorder = []
+    parents = {}
     for v in get_ordered_neighbors(g, u, neighbor_order):
         if v not in reached:
-            parents[v] = u
-            _dfs_from_recursive(
-                g, v, neighbor_order, reached, preorder, postorder, parents
+            # parents[v] = u
+            preorder_from_v, postorder_from_v, parents_from_v = _dfs_from_recursive(
+                g, v, neighbor_order, reached
             )
+            preorder.extend(preorder_from_v)
+            postorder.extend(postorder_from_v)
+            parents.update(parents_from_v)
+            parents[v] = u
     postorder.append(u)
+    return preorder, postorder, parents
 
 
 def _dfs_from_iterative(
@@ -96,10 +105,7 @@ def _dfs_from_iterative(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-    preorder: list[Hashable],
-    postorder: list[Hashable],
-    parents: dict[Hashable, Hashable],
-) -> None:
+) -> tuple[list[Hashable], dict[Hashable, Hashable], dict[Hashable, Hashable]]:
     """Iterative implementation of DFS node exploration.
 
     First, let's discuss the overall idea, without considering preorder and postorder. For simplicity, let's first consider the case of a
@@ -191,8 +197,11 @@ def _dfs_from_iterative(
                 to be shared.
         - TODO: check out https://www.youtube.com/watch?v=xLQKdq0Ffjg
     """
+    preorder = []
+    postorder = []
     double_reached = set()
     to_explore = [u]
+    parents = {u: None}
     while to_explore:
         u = to_explore.pop(-1)
         if u in reached:
@@ -212,3 +221,4 @@ def _dfs_from_iterative(
                 # if you only add the first time, it's stlil valid, it just wont' be the DFS path
                 parents[v] = u
                 to_explore.append(v)
+    return preorder, postorder, parents
