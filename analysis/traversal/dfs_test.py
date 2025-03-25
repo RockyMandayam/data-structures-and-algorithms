@@ -252,9 +252,9 @@ def test_dfs(recursive: bool) -> None:
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
+    assert parents == {0: None, 1: 0, 5: 0, 8: 0, 2: 1, 3: 2, 4: 3, 6: 5, 7: 6, 9: 8}
     assert pre == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     assert post == [4, 3, 2, 1, 7, 6, 5, 9, 8, 0]
-    assert parents == {0: None, 1: 0, 5: 0, 8: 0, 2: 1, 3: 2, 4: 3, 6: 5, 7: 6, 9: 8}
 
     # complete graphs (fully connected, so node 0 should just recurse fully in one pass)
     k = random.randint(4, 10)
@@ -263,32 +263,32 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     exp_path = list(range(k))
+    assert parents == {0: None, **{i: i - 1 for i in range(1, k)}}
     assert pre == exp_path
     assert post == exp_path[::-1]
-    assert parents == {0: None, **{i: i - 1 for i in range(1, k)}}
 
     # look ahead graph (see example in create_look_ahead_graph docstring)
     g = GraphFactory.create_look_ahead_graph(5, 2)
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
+    assert parents == {0: None, 1: 0, 2: 1, 3: 2, 4: 3}
     assert pre == [0, 1, 2, 3, 4]
     assert post == pre[::-1]
-    assert parents == {0: None, 1: 0, 2: 1, 3: 2, 4: 3}
     # now start from 2
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=2, neighbor_order=Order.SORTED
     )
+    assert parents == {2: None, 0: 2, 1: 0, 3: 1, 4: 3}
     assert pre == [2, 0, 1, 3, 4]
     assert post == pre[::-1]
-    assert parents == {2: None, 0: 2, 1: 0, 3: 1, 4: 3}
     # now start from 3
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=3, neighbor_order=Order.SORTED
     )
+    assert parents == {3: None, 1: 3, 0: 1, 2: 0, 4: 2}
     assert pre == [3, 1, 0, 2, 4]
     assert post == pre[::-1]
-    assert parents == {3: None, 1: 3, 0: 1, 2: 0, 4: 2}
 
     # cycles
     g = GraphFactory.create_circuit(4)
@@ -296,23 +296,23 @@ def test_dfs(recursive: bool) -> None:
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
+    assert parents == {0: None, **{i: i - 1 for i in range(1, 4)}}
     assert pre == [0, 1, 2, 3]
     assert post == pre[::-1]
-    assert parents == {0: None, **{i: i - 1 for i in range(1, 4)}}
     # start at 1, neighbors in sorted order
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=1, neighbor_order=Order.SORTED
     )
+    assert parents == {1: None, 0: 1, 3: 0, 2: 3}
     assert pre == [1, 0, 3, 2]
     assert post == pre[::-1]
-    assert parents == {1: None, 0: 1, 3: 0, 2: 3}
     # start at 3, neighbors in sorted order
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=3, neighbor_order=Order.SORTED
     )
+    assert parents == {3: None, 0: 3, 1: 0, 2: 1}
     assert pre == [3, 0, 1, 2]
     assert post == pre[::-1]
-    assert parents == {3: None, 0: 3, 1: 0, 2: 1}
 
     ### custom cylic graphs
     # two uneven cycles with 0 at center. I.e., a lopsided figure-8
@@ -335,9 +335,9 @@ def test_dfs(recursive: bool) -> None:
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
+    assert parents == {0: None, 1: 0, 2: 1, 3: 2, 4: 0, 5: 4, 6: 5, 7: 6, 8: 7}
     assert pre == [0, 1, 2, 3, 4, 5, 6, 7, 8]
     assert post == [3, 2, 1, 8, 7, 6, 5, 4, 0]
-    assert parents == {0: None, 1: 0, 2: 1, 3: 2, 4: 0, 5: 4, 6: 5, 7: 6, 8: 7}
     # neighbors in reverse order, so larger cycle first, and in the opposite direction
     parents, dists, pre, post, ccs = dfs(
         g,
@@ -345,9 +345,9 @@ def test_dfs(recursive: bool) -> None:
         seed_order=Order.SORTED,
         neighbor_order=Order.REVERSE_SORTED,
     )
+    assert parents == {0: None, 8: 0, 7: 8, 6: 7, 5: 6, 4: 5, 3: 0, 2: 3, 1: 2}
     assert pre == [0, 8, 7, 6, 5, 4, 3, 2, 1]
     assert post == [4, 5, 6, 7, 8, 1, 2, 3, 0]
-    assert parents == {0: None, 8: 0, 7: 8, 6: 7, 5: 6, 4: 5, 3: 0, 2: 3, 1: 2}
     # now start at 8
     parents, dists, pre, post, ccs = dfs(
         g,
@@ -355,9 +355,9 @@ def test_dfs(recursive: bool) -> None:
         seed_order=8,
         neighbor_order=Order.REVERSE_SORTED,
     )
+    assert parents == {8: None, 7: 8, 6: 7, 5: 6, 4: 5, 0: 4, 3: 0, 2: 3, 1: 2}
     assert pre == [8, 7, 6, 5, 4, 0, 3, 2, 1]
     assert post == [1, 2, 3, 0, 4, 5, 6, 7, 8]
-    assert parents == {8: None, 7: 8, 6: 7, 5: 6, 4: 5, 0: 4, 3: 0, 2: 3, 1: 2}
 
     # add node 9, add 0-9 edge, start at 9
     g.add_node(9)
@@ -368,9 +368,9 @@ def test_dfs(recursive: bool) -> None:
         seed_order=Order.REVERSE_SORTED,
         neighbor_order=Order.SORTED,
     )
+    assert parents == {9: None, 0: 9, 1: 0, 2: 1, 3: 2, 4: 0, 5: 4, 6: 5, 7: 6, 8: 7}
     assert pre == [9, 0, 1, 2, 3, 4, 5, 6, 7, 8]
     assert post == [3, 2, 1, 8, 7, 6, 5, 4, 0, 9]
-    assert parents == {9: None, 0: 9, 1: 0, 2: 1, 3: 2, 4: 0, 5: 4, 6: 5, 7: 6, 8: 7}
 
     # graph with a main line with cycles coming off of it
     # we already have the current example, we can just add to that
@@ -404,6 +404,29 @@ def test_dfs(recursive: bool) -> None:
         seed_order=9,
         neighbor_order=Order.SORTED,
     )
+    assert parents == {
+        9: None,
+        0: 9,
+        1: 0,
+        2: 1,
+        3: 2,
+        4: 0,
+        5: 4,
+        6: 5,
+        7: 6,
+        8: 7,
+        10: 0,
+        11: 10,
+        12: 11,
+        13: 12,
+        14: 11,
+        15: 14,
+        16: 15,
+        17: 16,
+        18: 17,
+        19: 18,
+        20: 19,
+    }
     assert pre == [
         9,
         0,
@@ -450,29 +473,6 @@ def test_dfs(recursive: bool) -> None:
         0,
         9,
     ]
-    assert parents == {
-        9: None,
-        0: 9,
-        1: 0,
-        2: 1,
-        3: 2,
-        4: 0,
-        5: 4,
-        6: 5,
-        7: 6,
-        8: 7,
-        10: 0,
-        11: 10,
-        12: 11,
-        13: 12,
-        14: 11,
-        15: 14,
-        16: 15,
-        17: 16,
-        18: 17,
-        19: 18,
-        20: 19,
-    }
 
     # "nested" cycles
     # 0-1-2-3-4-5-6-7-0
@@ -502,22 +502,20 @@ def test_dfs(recursive: bool) -> None:
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
-    assert pre == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    assert post == [7, 6, 5, 4, 3, 13, 12, 11, 10, 9, 8, 2, 1, 0]
     assert parents == {
         0: None,
         **{i: i - 1 for i in range(1, 8)},
         8: 2,
         **{i: i - 1 for i in range(9, 14)},
     }
+    assert pre == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    assert post == [7, 6, 5, 4, 3, 13, 12, 11, 10, 9, 8, 2, 1, 0]
     parents, dists, pre, post, ccs = dfs(
         g,
         recursive=recursive,
         seed_order=Order.SORTED,
         neighbor_order=Order.REVERSE_SORTED,
     )
-    assert pre == [0, 7, 6, 5, 4, 3, 2, 10, 13, 12, 11, 9, 8, 1]
-    assert post == [11, 12, 13, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 0]
     assert parents == {
         0: None,
         7: 0,
@@ -534,60 +532,62 @@ def test_dfs(recursive: bool) -> None:
         8: 9,
         1: 2,
     }
+    assert pre == [0, 7, 6, 5, 4, 3, 2, 10, 13, 12, 11, 9, 8, 1]
+    assert post == [11, 12, 13, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 0]
 
     # test disjoint graphs (disconnected components)
     g_spindly = GraphFactory.create_spindly_tree(3)
+    parents_spindly = {0: None, 1: 0, 2: 1}
     pre_spindly = list(range(3))
     post_spindly = pre_spindly[::-1]
-    parents_spindly = {0: None, 1: 0, 2: 1}
     g_b_ary = GraphFactory.create_b_ary_tree(2, 2)
+    parents_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
     pre_b_ary = [0, 1, 3, 4, 2, 5, 6]
     post_b_ary = [3, 4, 1, 5, 6, 2, 0]
-    parents_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
     # See 8 node binary example in create_nearly_spindly_b_ary_tree docstring
     g_nearly_spindly_b_ary = GraphFactory.create_nearly_spindly_b_ary_tree(2, 8)
+    parents_nearly_spindly_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
     pre_nearly_spindly_b_ary = [0, 1, 3, 5, 7, 6, 4, 2]
     post_nearly_spindly_b_ary = [7, 5, 6, 3, 4, 1, 2, 0]
-    parents_nearly_spindly_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
     g_custom = g  # above custom example
-    pre_custom = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    post_custom = [7, 6, 5, 4, 3, 13, 12, 11, 10, 9, 8, 2, 1, 0]
     parents_custom = {
         0: None,
         **{i: i - 1 for i in range(1, 8)},
         8: 2,
         **{i: i - 1 for i in range(9, 14)},
     }
+    pre_custom = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    post_custom = [7, 6, 5, 4, 3, 13, 12, 11, 10, 9, 8, 2, 1, 0]
     gs = (g_spindly, g_b_ary, g_nearly_spindly_b_ary, g_custom)
     g_combined = GraphFactory.concat_int_graphs(gs)
-    pres = (pre_spindly, pre_b_ary, pre_nearly_spindly_b_ary, pre_custom)
-    posts = (post_spindly, post_b_ary, post_nearly_spindly_b_ary, post_custom)
     parents_seq = (
         parents_spindly,
         parents_b_ary,
         parents_nearly_spindly_b_ary,
         parents_custom,
     )
+    pres = (pre_spindly, pre_b_ary, pre_nearly_spindly_b_ary, pre_custom)
+    posts = (post_spindly, post_b_ary, post_nearly_spindly_b_ary, post_custom)
     lengths = [len(g) for g in gs]
+    parents_exp = {}
     pre_exp = []
     post_exp = []
-    parents_exp = {}
     for i, (pre, post, parents) in enumerate(zip(pres, posts, parents_seq)):
         offset = sum(lengths[:i])
-        pre_exp.extend([offset + node for node in pre])
-        post_exp.extend([offset + node for node in post])
         parents_exp.update(
             {
                 offset + node: offset + parent if parent is not None else None
                 for node, parent in parents.items()
             }
         )
+        pre_exp.extend([offset + node for node in pre])
+        post_exp.extend([offset + node for node in post])
     parents, dists, pre, post, ccs = dfs(
         g_combined,
         recursive=recursive,
         seed_order=Order.SORTED,
         neighbor_order=Order.SORTED,
     )
+    assert parents == parents_exp
     assert pre == pre_exp
     assert post == post_exp
-    assert parents == parents_exp
