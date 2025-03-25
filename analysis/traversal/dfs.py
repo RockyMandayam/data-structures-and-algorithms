@@ -9,9 +9,7 @@ from graphs.analysis.traversal.utils import (
 from graphs.graph import Graph
 
 
-# TODO: max_depth
 # TODO: goal neighbor
-# TODO: allow specifying partial list of seed nodes?
 def dfs(
     g: Graph,
     *,
@@ -46,7 +44,8 @@ def dfs(
         dict[Hashable, float]: map from node to the distance from its seed to the node
         list[Hashable]: preorder corresponding to the particular traversal this DFS takes
         list[Hashable]: postorder corresponding to the same traversal
-        list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes
+        list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes, with the same order
+            as the preorder of the DFS traversal.
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
@@ -75,8 +74,7 @@ def dfs(
             dists.update(dists_from_u)
             preorder.extend(preorder_from_u)
             postorder.extend(postorder_from_u)
-            ccs.extend(preorder_from_u)  # could use postorder or keys of parents also
-    # TODO test ccs
+            ccs.append(preorder_from_u)  # could use postorder or keys of parents also
     # TODO test dists
     return parents, dists, preorder, postorder, ccs
 

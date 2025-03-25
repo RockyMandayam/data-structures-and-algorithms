@@ -39,7 +39,8 @@ def bfs(
         list[Hashable]: level order of nodes in the BFS traversal
         dict[Hashable, float]: map from node to the distance from its seed to the node
         dict[Hashable, Hashable]: parents dict which encodes the traversal tree
-        list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes
+        list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes, with the same order
+            as the level order of the BFS traversal.
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
@@ -56,8 +57,7 @@ def bfs(
             parents.update(parents_from_u)
             dists.update(dists_from_u)
             levelorder.extend(levelorder_from_u)
-            ccs.extend(levelorder_from_u)
-    # TODO test ccs
+            ccs.append(levelorder_from_u)
     # TODO test dists
     return parents, dists, levelorder, ccs
 
