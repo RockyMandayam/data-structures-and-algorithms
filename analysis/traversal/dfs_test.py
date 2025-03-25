@@ -23,16 +23,16 @@ def test_dfs(recursive: bool) -> None:
     # empty graph
     g = Graph()
     parents, dists, pre, post, ccs = dfs(g, recursive=recursive)
+    assert parents == {}
     assert pre == []
     assert post == []
-    assert parents == {}
 
     # singleton graph
     g = Graph(nodes=1)
     parents, dists, pre, post, ccs = dfs(g, recursive=recursive)
+    assert parents == {0: None}
     assert pre == [0]
     assert post == [0]
-    assert parents == {0: None}
 
     # generally: n nodes, 0 edges
     for n in (2, 3, random.randint(4, MAX_TEST_GRAPH_SIZE)):
@@ -47,9 +47,9 @@ def test_dfs(recursive: bool) -> None:
         parents, dists, pre, post, ccs = dfs(
             g, recursive=recursive, seed_order=Order.REVERSE_SORTED
         )
+        assert parents == {u: None for u in range(n)}
         assert pre == list(range(n - 1, -1, -1)), n
         assert post == pre, n
-        assert parents == {u: None for u in range(n)}
 
     ### spindly trees
 
@@ -60,16 +60,16 @@ def test_dfs(recursive: bool) -> None:
         parents, dists, pre, post, ccs = dfs(
             g, recursive=recursive, seed_order=Order.SORTED
         )
+        assert parents == {0: None, **{u: u - 1 for u in range(1, n)}}
         assert pre == list(range(n)), n
         assert post == pre[::-1]
-        assert parents == {0: None, **{u: u - 1 for u in range(1, n)}}
         # in reverse sorted order
         parents, dists, pre, post, ccs = dfs(
             g, recursive=recursive, seed_order=Order.REVERSE_SORTED
         )
+        assert parents == {n - 1: None, **{u: u + 1 for u in range(n - 1)}}
         assert pre == list(range(n - 1, -1, -1)), n
         assert post == pre[::-1]
-        assert parents == {n - 1: None, **{u: u + 1 for u in range(n - 1)}}
         # branch from the middle
         dfs_root = random.randint(1, n - 1)
         to_left = list(range(dfs_root - 1, -1, -1))  # from middle to the left
@@ -79,14 +79,14 @@ def test_dfs(recursive: bool) -> None:
         parents, dists, pre, post, ccs = dfs(
             g, recursive=recursive, seed_order=dfs_root, neighbor_order=Order.SORTED
         )
-        assert pre == [dfs_root, *to_left, *to_right]
-        assert post == [*to_left[::-1], *to_right[::-1], dfs_root]
         exp_parents = {
             dfs_root: None,
             **{u: u + 1 for u in range(dfs_root)},
             **{u: u - 1 for u in range(dfs_root + 1, n)},
         }
         assert parents == exp_parents
+        assert pre == [dfs_root, *to_left, *to_right]
+        assert post == [*to_left[::-1], *to_right[::-1], dfs_root]
         # explore right then left
         parents, dists, pre, post, ccs = dfs(
             g,
@@ -94,9 +94,9 @@ def test_dfs(recursive: bool) -> None:
             seed_order=dfs_root,
             neighbor_order=Order.REVERSE_SORTED,
         )
+        assert parents == exp_parents
         assert pre == [dfs_root, *to_right, *to_left]
         assert post == [*to_right[::-1], *to_left[::-1], dfs_root]
-        assert parents == exp_parents
 
     ### binary trees
 
@@ -106,10 +106,10 @@ def test_dfs(recursive: bool) -> None:
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
-    assert pre == [0, 1, 3, 4, 2, 5, 6]
-    assert post == [3, 4, 1, 5, 6, 2, 0]
     exp_parents = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
     assert parents == exp_parents
+    assert pre == [0, 1, 3, 4, 2, 5, 6]
+    assert post == [3, 4, 1, 5, 6, 2, 0]
     # starting from 0, neighbors in reverse order
     parents, dists, pre, post, ccs = dfs(
         g,
@@ -117,9 +117,9 @@ def test_dfs(recursive: bool) -> None:
         seed_order=Order.SORTED,
         neighbor_order=Order.REVERSE_SORTED,
     )
+    assert parents == exp_parents
     assert pre == [0, 2, 6, 5, 1, 4, 3]
     assert post == [6, 5, 2, 4, 3, 1, 0]
-    assert parents == exp_parents
     # starting from 6, neighbors in sorted order
     parents, dists, pre, post, ccs = dfs(
         g,
@@ -127,10 +127,10 @@ def test_dfs(recursive: bool) -> None:
         seed_order=Order.REVERSE_SORTED,
         neighbor_order=Order.SORTED,
     )
-    assert pre == [6, 2, 0, 1, 3, 4, 5]
-    assert post == [3, 4, 1, 0, 5, 2, 6]
     exp_parents = {6: None, 2: 6, 5: 2, 0: 2, 1: 0, 3: 1, 4: 1}
     assert parents == exp_parents
+    assert pre == [6, 2, 0, 1, 3, 4, 5]
+    assert post == [3, 4, 1, 0, 5, 2, 6]
     # starting from 6, neighbors in reverse order
     parents, dists, pre, post, ccs = dfs(
         g,
@@ -138,9 +138,9 @@ def test_dfs(recursive: bool) -> None:
         seed_order=Order.REVERSE_SORTED,
         neighbor_order=Order.REVERSE_SORTED,
     )
+    assert parents == exp_parents
     assert pre == [6, 2, 5, 0, 1, 4, 3]
     assert post == [5, 4, 3, 1, 0, 2, 6]
-    assert parents == exp_parents
     # starting from 1
     parents, dists, pre, post, ccs = dfs(
         g,
@@ -148,10 +148,10 @@ def test_dfs(recursive: bool) -> None:
         seed_order=1,
         neighbor_order=Order.SORTED,
     )
-    assert pre == [1, 0, 2, 5, 6, 3, 4]
-    assert post == [5, 6, 2, 0, 3, 4, 1]
     exp_parents = {1: None, 3: 1, 4: 1, 0: 1, 2: 0, 5: 2, 6: 2}
     assert parents == exp_parents
+    assert pre == [1, 0, 2, 5, 6, 3, 4]
+    assert post == [5, 6, 2, 0, 3, 4, 1]
     # now neighbors in reverse order
     parents, dists, pre, post, ccs = dfs(
         g,
@@ -159,9 +159,9 @@ def test_dfs(recursive: bool) -> None:
         seed_order=1,
         neighbor_order=Order.REVERSE_SORTED,
     )
+    assert parents == exp_parents
     assert pre == [1, 4, 3, 0, 2, 6, 5]
     assert post == [4, 3, 6, 5, 2, 0, 1]
-    assert parents == exp_parents
 
     ### nearly spindly trees
 
@@ -170,9 +170,9 @@ def test_dfs(recursive: bool) -> None:
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
+    assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
     assert pre == [0, 1, 3, 5, 7, 6, 4, 2]
     assert post == [7, 5, 6, 3, 4, 1, 2, 0]
-    assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
     # start from node 3 (arbitrarily chosen), neighbors in sorted order
     parents, dists, pre, post, ccs = dfs(
         g,
@@ -180,10 +180,10 @@ def test_dfs(recursive: bool) -> None:
         seed_order=3,
         neighbor_order=Order.SORTED,
     )
-    assert pre == [3, 1, 0, 2, 4, 5, 7, 6]
-    assert post == [2, 0, 4, 1, 7, 5, 6, 3]
     exp_parents = {3: None, 5: 3, 6: 3, 7: 5, 1: 3, 4: 1, 0: 1, 2: 0}
     assert parents == exp_parents
+    assert pre == [3, 1, 0, 2, 4, 5, 7, 6]
+    assert post == [2, 0, 4, 1, 7, 5, 6, 3]
     # now with neighbors in reverse order
     parents, dists, pre, post, ccs = dfs(
         g,
@@ -191,18 +191,18 @@ def test_dfs(recursive: bool) -> None:
         seed_order=3,
         neighbor_order=Order.REVERSE_SORTED,
     )
+    assert parents == exp_parents
     assert pre == [3, 6, 5, 7, 1, 4, 0, 2]
     assert post == [6, 7, 5, 4, 2, 0, 1, 3]
-    parents == exp_parents
 
     # Same with 9 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 9)
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
+    assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5, 8: 5}
     assert pre == [0, 1, 3, 5, 7, 8, 6, 4, 2]
     assert post == [7, 8, 5, 6, 3, 4, 1, 2, 0]
-    assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5, 8: 5}
     # start from node 8, neighbors in sorted order
     parents, dists, pre, post, ccs = dfs(
         g,
@@ -210,39 +210,39 @@ def test_dfs(recursive: bool) -> None:
         seed_order=8,
         neighbor_order=Order.SORTED,
     )
+    assert parents == {8: None, 5: 8, 7: 5, 3: 5, 6: 3, 1: 3, 4: 1, 0: 1, 2: 0}
     assert pre == [8, 5, 3, 1, 0, 2, 4, 6, 7]
     assert post == [2, 0, 4, 1, 6, 3, 7, 5, 8]
-    assert parents == {8: None, 5: 8, 7: 5, 3: 5, 6: 3, 1: 3, 4: 1, 0: 1, 2: 0}
 
     # See 10 node 3-ary example in create_nearly_spindly_b_ary_tree docstring
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 10)
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
-    assert pre == [0, 1, 4, 7, 8, 9, 5, 6, 2, 3]
-    assert post == [7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
     exp_parents = {0: None, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 4, 8: 4, 9: 4}
     assert parents == exp_parents
+    assert pre == [0, 1, 4, 7, 8, 9, 5, 6, 2, 3]
+    assert post == [7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
 
     # Same with 11 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 11)
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
-    assert pre == [0, 1, 4, 7, 10, 8, 9, 5, 6, 2, 3]
-    assert post == [10, 7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
     exp_parents[10] = 7
     assert parents == exp_parents
+    assert pre == [0, 1, 4, 7, 10, 8, 9, 5, 6, 2, 3]
+    assert post == [10, 7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
 
     # Same with 12 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 12)
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
-    assert pre == [0, 1, 4, 7, 10, 11, 8, 9, 5, 6, 2, 3]
-    assert post == [10, 11, 7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
     exp_parents[11] = 7
     assert parents == exp_parents
+    assert pre == [0, 1, 4, 7, 10, 11, 8, 9, 5, 6, 2, 3]
+    assert post == [10, 11, 7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
 
     ### arbitrary custom tree
     g = Graph(
