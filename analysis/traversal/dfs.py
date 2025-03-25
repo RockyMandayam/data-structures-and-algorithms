@@ -9,9 +9,7 @@ from graphs.analysis.traversal.utils import (
 from graphs.graph import Graph
 
 
-# TODO: max_depth
 # TODO: goal neighbor
-# TODO: allow specifying partial list of seed nodes?
 def dfs(
     g: Graph,
     *,

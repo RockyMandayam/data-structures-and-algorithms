@@ -78,6 +78,81 @@ def bfs_from(
     return _bfs_from(g, u, neighbor_order, reached)
 
 
+# def _bfs_from_approach_1(
+#     g: Graph,
+#     u: Hashable,
+#     neighbor_order: Order | None,
+#     reached: set,
+# ) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable]]:
+#     """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
+#     use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
+#     AND only update parents if a node isn't already in it.
+
+#     In this approach (approach 1), we replace the "if v not in reached" with "if v not in parents" to achieve
+#     the goal of only updating parents if a ndoe isn't already in it. The keys of parents serve as a "seen"
+#     set, which is all the reached nodes plus the nodes in the queue that haven't been popped yet (i.e., they're
+#     "seen" but not "reached").
+
+#     Instead of marking a node as reached when we pop it off the queue, we could mark a node as reached when
+#     we add it to the queue. However, this means the seed node would need to be marked as reached by the caller,
+#     and I think this is messier. I think keeping the idea of "reached" as "popped off the queue" is easier to
+#     understand, and also generalizes better to Dijkstra. But then again, the downside of this scheme is that
+#     it doesn't vibe well with reached. I.e., a node is not reached and yet at that point it's enqueued, its
+#     parent is set!
+#     """
+#     parents = {u: None}
+#     dists = {u: 0}
+#     to_explore = [u]
+#     levelorder = []
+#     while to_explore:
+#         u = to_explore.pop(0)
+#         if u in reached:
+#             continue
+#         reached.add(u)
+#         levelorder.append(u)
+#         for v in get_ordered_neighbors(g, u, neighbor_order):
+#             # in DFS, we do "if v not in reached"
+#             # parents serves as a "seen" set. BFS relies on concept of "seen" not "reached"
+#             # but at least for now, I find "reached" a cleaner concept
+#             if v not in parents:
+#                 parents[v] = u
+#                 dists[v] = dists[u] + 1
+#                 to_explore.append(v)
+#     return parents, dists, levelorder
+
+
+def _bfs_from_approach_2(
+    g: Graph,
+    u: Hashable,
+    neighbor_order: Order | None,
+    reached: set,
+) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable]]:
+    """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
+    use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
+    AND only update parents if a node isn't already in it.
+
+    In this approach (approach 2), we use "reached" to really mean more like "seen", i.e., the keys of parents.
+    In fact, we don't even need reached for this traversal, but I'm just keeping it for consistency. Theoretically,
+    the caller could completely remove reached and just check if a node is in parents... And it just keeps it
+    more consistent with the DFS implementation.
+    """
+    parents = {u: None}
+    dists = {u: 0}
+    to_explore = [u]
+    levelorder = []
+    reached.add(u)
+    while to_explore:
+        u = to_explore.pop(0)
+        levelorder.append(u)
+        for v in get_ordered_neighbors(g, u, neighbor_order):
+            if v not in reached:
+                parents[v] = u
+                dists[v] = dists[u] + 1
+                to_explore.append(v)
+                reached.add(v)
+    return parents, dists, levelorder
+
+
 def _bfs_from_approach_1(
     g: Graph,
     u: Hashable,
@@ -114,40 +189,9 @@ def _bfs_from_approach_1(
             # in DFS, we do "if v not in reached"
             # parents serves as a "seen" set. BFS relies on concept of "seen" not "reached"
             # but at least for now, I find "reached" a cleaner concept
-            if v not in parents:
-                parents[v] = u
-                dists[v] = dists[u] + 1
-                to_explore.append(v)
-    return parents, dists, levelorder
-
-
-def _bfs_from_approach_2(
-    g: Graph,
-    u: Hashable,
-    neighbor_order: Order | None,
-    reached: set,
-) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable]]:
-    """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
-    use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
-    AND only update parents if a node isn't already in it.
-
-    In this approach (approach 2), we use "reached" to really mean more like "seen", i.e., the keys of parents.
-    In fact, we don't even need reached for this traversal, but I'm just keeping it for consistency. Theoretically,
-    the caller could completely remove reached and just check if a node is in parents... And it just keeps it
-    more consistent with the DFS implementation.
-    """
-    parents = {u: None}
-    dists = {u: 0}
-    to_explore = [u]
-    levelorder = []
-    reached.add(u)
-    while to_explore:
-        u = to_explore.pop(0)
-        levelorder.append(u)
-        for v in get_ordered_neighbors(g, u, neighbor_order):
             if v not in reached:
-                parents[v] = u
-                dists[v] = dists[u] + 1
+                if v not in parents:
+                    parents[v] = u
+                    dists[v] = dists[u] + 1
                 to_explore.append(v)
-                reached.add(v)
     return parents, dists, levelorder
