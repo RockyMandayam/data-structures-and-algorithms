@@ -14,7 +14,7 @@ def bfs(
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
     use_approach_1: bool = True,
-) -> tuple[list[Hashable], dict[Hashable, Hashable], list[list[Hashable]]]:
+) -> tuple[dict[Hashable, Hashable], list[Hashable], list[list[Hashable]]]:
     """Breadth first search (BFS) implementation.
 
     This is VERY similar to DFS. It could be implemented in the same function. But because of the different return
@@ -37,9 +37,9 @@ def bfs(
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
+    parents = {}
     reached = set()
     levelorder = []
-    parents = {}
     ccs = []
     for u in seed_nodes:
         if u not in reached:
@@ -50,7 +50,7 @@ def bfs(
             levelorder.extend(levelorder_from_u)
             ccs.extend(levelorder_from_u)
     # TODO test ccs
-    return levelorder, parents, ccs
+    return parents, levelorder, ccs
 
 
 # TODO test this separately
