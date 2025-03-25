@@ -18,7 +18,9 @@ def dfs(
     recursive: bool = False,
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
-) -> tuple[list[Hashable], list[Hashable], dict[Hashable, Hashable]]:
+) -> tuple[
+    list[Hashable], list[Hashable], dict[Hashable, Hashable], list[list[Hashable]]
+]:
     """Depth first search (DFS) implementation.
 
     The recursive and iterative versions both have an inital overall "iterative" part, but beyond that they diverge
@@ -39,6 +41,7 @@ def dfs(
         list[Hashable]: postorder corresponding to the same traversal
         dict[Hashable, Hashable]: path parents map, a map from each node to its parent in the DFS tree,
             or to None if it has no parent in the DFS tree (i.e., if it served as a seed node)
+        list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
@@ -46,6 +49,7 @@ def dfs(
     reached = set()
     preorder = []
     postorder = []
+    ccs = []
     for u in seed_nodes:
         if u not in reached:
             # _dfs_from: Callable = (
@@ -67,7 +71,9 @@ def dfs(
             parents.update(parents_from_u)
             preorder.extend(preorder_from_u)
             postorder.extend(postorder_from_u)
-    return preorder, postorder, parents
+            ccs.extend(preorder_from_u)  # could use postorder or keys of parents also
+    # TODO test ccs
+    return preorder, postorder, parents, ccs
 
 
 # TODO test this separately
