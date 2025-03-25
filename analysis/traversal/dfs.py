@@ -37,10 +37,10 @@ def dfs(
         neighbor_order: optional order in which to explore neighbors of a node; if not provided, undetermined order.
 
     Returns:
-        list[Hashable]: preorder corresponding to the particular traversal this DFS takes
-        list[Hashable]: postorder corresponding to the same traversal
         dict[Hashable, Hashable]: path parents map, a map from each node to its parent in the DFS tree,
             or to None if it has no parent in the DFS tree (i.e., if it served as a seed node)
+        list[Hashable]: preorder corresponding to the particular traversal this DFS takes
+        list[Hashable]: postorder corresponding to the same traversal
         list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
@@ -73,7 +73,7 @@ def dfs(
             postorder.extend(postorder_from_u)
             ccs.extend(preorder_from_u)  # could use postorder or keys of parents also
     # TODO test ccs
-    return preorder, postorder, parents, ccs
+    return parents, preorder, postorder, ccs
 
 
 # TODO test this separately
