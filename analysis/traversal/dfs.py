@@ -19,7 +19,11 @@ def dfs(
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
 ) -> tuple[
-    dict[Hashable, Hashable], list[Hashable], list[Hashable], list[list[Hashable]]
+    dict[Hashable, Hashable],
+    dict[Hashable, float],
+    list[Hashable],
+    list[Hashable],
+    list[list[Hashable]],
 ]:
     """Depth first search (DFS) implementation.
 
@@ -39,6 +43,7 @@ def dfs(
     Returns:
         dict[Hashable, Hashable]: path parents map, a map from each node to its parent in the DFS tree,
             or to None if it has no parent in the DFS tree (i.e., if it served as a seed node)
+        dict[Hashable, float]: map from node to the distance from its seed to the node
         list[Hashable]: preorder corresponding to the particular traversal this DFS takes
         list[Hashable]: postorder corresponding to the same traversal
         list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes
@@ -46,22 +51,20 @@ def dfs(
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
     parents = {}
+    dists = {}
     reached = set()
     preorder = []
     postorder = []
     ccs = []
     for u in seed_nodes:
         if u not in reached:
-            # _dfs_from: Callable = (
-            #     _dfs_from_recursive if recursive else _dfs_from_iterative
-            # )
             # won't do the same for reached_from_u. Why? Well, for directed graphs, there are times when a node
             # will be reached via a previous _dfs_from call, so inside _dfs_from we still need to pass in reached
             # anyways, but if we have a reached_from_u, it'll just be an extra set to track simultaneously. Instead,
             # since every "seen" node will be "reached" at the end of a _dfs_from call, we can just use the other
             # returned values to determine which nodes were visited in a given call to _dfs_from (preorder_from_u,
             # postorder_from_u, or keys of parents_from_u).
-            parents_from_u, preorder_from_u, postorder_from_u = dfs_from(
+            parents_from_u, dists_from_u, preorder_from_u, postorder_from_u = dfs_from(
                 g,
                 u,
                 neighbor_order,
@@ -69,11 +72,13 @@ def dfs(
                 recursive=recursive,
             )
             parents.update(parents_from_u)
+            dists.update(dists_from_u)
             preorder.extend(preorder_from_u)
             postorder.extend(postorder_from_u)
             ccs.extend(preorder_from_u)  # could use postorder or keys of parents also
     # TODO test ccs
-    return parents, preorder, postorder, ccs
+    # TODO test dists
+    return parents, dists, preorder, postorder, ccs
 
 
 # TODO test this separately
@@ -83,7 +88,12 @@ def dfs_from(
     neighbor_order: Order | None,
     reached: set | None = None,
     recursive: bool = False,
-) -> tuple[dict[Hashable, Hashable], list[Hashable], dict[Hashable, Hashable]]:
+) -> tuple[
+    dict[Hashable, Hashable],
+    dict[Hashable, float],
+    list[Hashable],
+    dict[Hashable, Hashable],
+]:
     _dfs_from: Callable = _dfs_from_recursive if recursive else _dfs_from_iterative
     if reached is None:
         reached = set()
@@ -97,7 +107,13 @@ def _dfs_from_recursive(
     reached: set,
     *,
     parent: Hashable = None,  # only set to non-None when called recursively
-) -> tuple[dict[Hashable, Hashable], list[Hashable], dict[Hashable, Hashable]]:
+    dists: dict | None = None,  # only set to non-None when called recursively
+) -> tuple[
+    dict[Hashable, Hashable],
+    dict[Hashable, float],
+    list[Hashable],
+    dict[Hashable, Hashable],
+]:
     """Recursive exploration
 
     NOTE: Instead of doing reached.add(u) as the first thing when you explore a node, you can instead do it before calling
@@ -113,24 +129,35 @@ def _dfs_from_recursive(
     you could just have it not be present in the mapping, but I'll just choose the convention that a start node's parent
     is None. At least this change is the same for the recursive and iterative implementations though!
     """
+    assert (parent is None) == (dists is None)
     parents = {u: parent}
+    if dists is None:
+        dists = {u: 0}
+    else:
+        dists[u] = dists[parent] + 1
     reached.add(u)
     preorder = [u]
     postorder = []
     for v in get_ordered_neighbors(g, u, neighbor_order):
         if v not in reached:
-            parents_from_v, preorder_from_v, postorder_from_v = _dfs_from_recursive(
+            (
+                parents_from_v,
+                dists_from_v,
+                preorder_from_v,
+                postorder_from_v,
+            ) = _dfs_from_recursive(
                 g,
                 v,
                 neighbor_order,
                 reached,
                 parent=u,
+                dists=dists,
             )
             parents.update(parents_from_v)
             preorder.extend(preorder_from_v)
             postorder.extend(postorder_from_v)
     postorder.append(u)
-    return parents, preorder, postorder
+    return parents, dists, preorder, postorder
 
 
 def _dfs_from_iterative(
@@ -138,7 +165,12 @@ def _dfs_from_iterative(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-) -> tuple[dict[Hashable, Hashable], list[Hashable], dict[Hashable, Hashable]]:
+) -> tuple[
+    dict[Hashable, Hashable],
+    dict[Hashable, float],
+    list[Hashable],
+    dict[Hashable, Hashable],
+]:
     """Iterative implementation of DFS node exploration.
 
     First, let's discuss the overall idea, without considering preorder and postorder. For simplicity, let's first consider the case of a
@@ -231,6 +263,7 @@ def _dfs_from_iterative(
         - TODO: check out https://www.youtube.com/watch?v=xLQKdq0Ffjg
     """
     parents = {u: None}
+    dists = {u: 0}
     to_explore = [u]
     double_reached = set()
     preorder = []
@@ -253,5 +286,6 @@ def _dfs_from_iterative(
                 # popped off the stack first, and then after that we'll never reach this line again
                 # if you only add the first time, it's stlil valid, it just wont' be the DFS path
                 parents[v] = u
+                dists[v] = dists[u] + 1
                 to_explore.append(v)
-    return parents, preorder, postorder
+    return parents, dists, preorder, postorder
