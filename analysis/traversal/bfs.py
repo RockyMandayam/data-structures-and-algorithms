@@ -44,13 +44,28 @@ def bfs(
     reached_from_seeds = []
     for u in seed_nodes:
         if u not in reached:
-            _bfs_from: Callable = (
-                _bfs_from_approach_1 if use_approach_1 else _bfs_from_approach_2
+            parents_from_u, levelorder_from_u = bfs_from(
+                g, u, neighbor_order, reached, use_approach_1=use_approach_1
             )
-            parents_from_u, levelorder_from_u = _bfs_from(g, u, neighbor_order, reached)
             parents.update(parents_from_u)
             levelorder.extend(levelorder_from_u)
     return levelorder, parents, reached_from_seeds
+
+
+# TODO test this separately
+def bfs_from(
+    g: Graph,
+    u: Hashable,
+    neighbor_order: Order | None,
+    reached: set | None = None,
+    use_approach_1: bool = True,
+) -> tuple[list[Hashable], list[Hashable], dict[Hashable, Hashable]]:
+    _bfs_from: Callable = (
+        _bfs_from_approach_1 if use_approach_1 else _bfs_from_approach_2
+    )
+    if reached is None:
+        reached = set()
+    return _bfs_from(g, u, neighbor_order, reached)
 
 
 def _bfs_from_approach_1(
