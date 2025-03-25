@@ -14,7 +14,12 @@ def bfs(
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
     use_approach_1: bool = True,
-) -> tuple[list[Hashable], dict[Hashable, Hashable], list[list[Hashable]]]:
+) -> tuple[
+    dict[Hashable, Hashable],
+    dict[Hashable, float],
+    list[Hashable],
+    list[list[Hashable]],
+]:
     """Breadth first search (BFS) implementation.
 
     This is VERY similar to DFS. It could be implemented in the same function. But because of the different return
@@ -32,25 +37,29 @@ def bfs(
 
     Returns:
         list[Hashable]: level order of nodes in the BFS traversal
+        dict[Hashable, float]: map from node to the distance from its seed to the node
         dict[Hashable, Hashable]: parents dict which encodes the traversal tree
         list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
+    parents = {}
+    dists = {}
     reached = set()
     levelorder = []
-    parents = {}
     ccs = []
     for u in seed_nodes:
         if u not in reached:
-            parents_from_u, levelorder_from_u = bfs_from(
+            parents_from_u, dists_from_u, levelorder_from_u = bfs_from(
                 g, u, neighbor_order, reached, use_approach_1=use_approach_1
             )
             parents.update(parents_from_u)
+            dists.update(dists_from_u)
             levelorder.extend(levelorder_from_u)
             ccs.extend(levelorder_from_u)
     # TODO test ccs
-    return levelorder, parents, ccs
+    # TODO test dists
+    return parents, dists, levelorder, ccs
 
 
 # TODO test this separately
@@ -60,7 +69,7 @@ def bfs_from(
     neighbor_order: Order | None,
     reached: set | None = None,
     use_approach_1: bool = True,
-) -> tuple[list[Hashable], list[Hashable]]:
+) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable]]:
     _bfs_from: Callable = (
         _bfs_from_approach_1 if use_approach_1 else _bfs_from_approach_2
     )
@@ -74,7 +83,7 @@ def _bfs_from_approach_1(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-) -> tuple[list[Hashable], list[Hashable]]:
+) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable]]:
     """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
     use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
     AND only update parents if a node isn't already in it.
@@ -92,6 +101,7 @@ def _bfs_from_approach_1(
     parent is set!
     """
     parents = {u: None}
+    dists = {u: 0}
     to_explore = [u]
     levelorder = []
     while to_explore:
@@ -106,8 +116,9 @@ def _bfs_from_approach_1(
             # but at least for now, I find "reached" a cleaner concept
             if v not in parents:
                 parents[v] = u
+                dists[v] = dists[u] + 1
                 to_explore.append(v)
-    return parents, levelorder
+    return parents, dists, levelorder
 
 
 def _bfs_from_approach_2(
@@ -115,7 +126,7 @@ def _bfs_from_approach_2(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-) -> tuple[list[Hashable], list[Hashable]]:
+) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable]]:
     """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
     use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
     AND only update parents if a node isn't already in it.
@@ -126,6 +137,7 @@ def _bfs_from_approach_2(
     more consistent with the DFS implementation.
     """
     parents = {u: None}
+    dists = {u: 0}
     to_explore = [u]
     levelorder = []
     reached.add(u)
@@ -135,6 +147,7 @@ def _bfs_from_approach_2(
         for v in get_ordered_neighbors(g, u, neighbor_order):
             if v not in reached:
                 parents[v] = u
+                dists[v] = dists[u] + 1
                 to_explore.append(v)
                 reached.add(v)
-    return parents, levelorder
+    return parents, dists, levelorder
