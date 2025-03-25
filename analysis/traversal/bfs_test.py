@@ -25,12 +25,14 @@ def test_bfs(use_approach_1: bool) -> None:
     parents, dists, level, ccs = bfs(g, use_approach_1=use_approach_1)
     assert parents == {}
     assert level == []
+    assert ccs == []
 
     # singleton graph
     g = Graph(nodes=1)
     parents, dists, level, ccs = bfs(g, use_approach_1=use_approach_1)
     assert parents == {0: None}
     assert level == [0]
+    assert ccs == [[0]]
 
     # generally: n nodes, 0 edges
     for n in (2, 3, random.randint(4, MAX_TEST_GRAPH_SIZE)):
@@ -41,12 +43,14 @@ def test_bfs(use_approach_1: bool) -> None:
         )
         assert parents == {u: None for u in range(n)}
         assert level == list(range(n)), n
+        assert ccs == [[i] for i in range(n)]
         # seeds in reverse sorted order
         parents, dists, level, ccs = bfs(
             g, use_approach_1=use_approach_1, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {u: None for u in range(n)}
         assert level == list(range(n - 1, -1, -1)), n
+        assert ccs == [[i] for i in range(n - 1, -1, -1)]
 
     ### spindly trees
 
@@ -59,12 +63,14 @@ def test_bfs(use_approach_1: bool) -> None:
         )
         assert parents == {0: None, **{u: u - 1 for u in range(1, n)}}
         assert level == list(range(n)), n
+        assert ccs == [level]
         # in reverse sorted order
         parents, dists, level, ccs = bfs(
             g, use_approach_1=use_approach_1, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {n - 1: None, **{u: u + 1 for u in range(n - 1)}}
         assert level == list(range(n - 1, -1, -1)), n
+        assert ccs == [level]
         # branch from the middle
         bfs_root = random.randint(1, n - 1)
         to_left = list(range(bfs_root - 1, -1, -1))  # from middle to the left
@@ -91,6 +97,7 @@ def test_bfs(use_approach_1: bool) -> None:
             if right in g:
                 exp_level.append(right)
         assert level == exp_level
+        assert ccs == [level]
         # explore right then left
         parents, dists, level, ccs = bfs(
             g,
@@ -107,6 +114,7 @@ def test_bfs(use_approach_1: bool) -> None:
             if left in g:
                 exp_level.append(left)
         assert level == exp_level
+        assert ccs == [level]
 
     ### binary trees
 
@@ -122,6 +130,7 @@ def test_bfs(use_approach_1: bool) -> None:
     exp_parents = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
     assert parents == exp_parents
     assert level == [0, 1, 2, 3, 4, 5, 6]
+    assert ccs == [level]
     # starting from 0, neighbors in reverse order
     parents, dists, level, ccs = bfs(
         g,
@@ -131,6 +140,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == exp_parents
     assert level == [0, 2, 1, 6, 5, 4, 3]
+    assert ccs == [level]
     # starting from 6, neighbors in sorted order
     parents, dists, level, ccs = bfs(
         g,
@@ -141,6 +151,7 @@ def test_bfs(use_approach_1: bool) -> None:
     exp_parents = {6: None, 2: 6, 5: 2, 0: 2, 1: 0, 3: 1, 4: 1}
     assert parents == exp_parents
     assert level == [6, 2, 0, 5, 1, 3, 4]
+    assert ccs == [level]
     # starting from 6, neighbors in reverse order
     parents, dists, level, ccs = bfs(
         g,
@@ -150,6 +161,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == exp_parents
     assert level == [6, 2, 5, 0, 1, 4, 3]
+    assert ccs == [level]
     # starting from 1
     parents, dists, level, ccs = bfs(
         g,
@@ -160,6 +172,7 @@ def test_bfs(use_approach_1: bool) -> None:
     exp_parents = {1: None, 3: 1, 4: 1, 0: 1, 2: 0, 5: 2, 6: 2}
     assert parents == exp_parents
     assert level == [1, 0, 3, 4, 2, 5, 6]
+    assert ccs == [level]
     # now neighbors in reverse order
     parents, dists, level, ccs = bfs(
         g,
@@ -169,6 +182,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == exp_parents
     assert level == [1, 4, 3, 0, 2, 6, 5]
+    assert ccs == [level]
 
     ### nearly spindly trees
 
@@ -182,6 +196,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
     assert level == list(range(8))
+    assert ccs == [level]
     # start from node 3 (arbitrarily chosen), neighbors in sorted order
     parents, dists, level, ccs = bfs(
         g,
@@ -192,6 +207,7 @@ def test_bfs(use_approach_1: bool) -> None:
     exp_parents = {3: None, 5: 3, 6: 3, 1: 3, 7: 5, 4: 1, 0: 1, 2: 0}
     assert parents == exp_parents
     assert level == [3, 1, 5, 6, 0, 4, 7, 2]
+    assert ccs == [level]
     # now with neighbors in reverse order
     parents, dists, level, ccs = bfs(
         g,
@@ -201,6 +217,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == exp_parents
     assert level == [3, 6, 5, 1, 7, 4, 0, 2]
+    assert ccs == [level]
 
     # Same with 9 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 9)
@@ -212,6 +229,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5, 8: 5}
     assert level == list(range(9))
+    assert ccs == [level]
     # start from node 8, neighbors in sorted order
     parents, dists, level, ccs = bfs(
         g,
@@ -221,6 +239,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {8: None, 5: 8, 7: 5, 3: 5, 6: 3, 1: 3, 4: 1, 0: 1, 2: 0}
     assert level == [8, 5, 3, 7, 1, 6, 0, 4, 2]
+    assert ccs == [level]
 
     # See 10 node 3-ary example in create_nearly_spindly_b_ary_tree docstring
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 10)
@@ -233,6 +252,7 @@ def test_bfs(use_approach_1: bool) -> None:
     exp_parents = {0: None, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 4, 8: 4, 9: 4}
     assert parents == exp_parents
     assert level == list(range(10))
+    assert ccs == [level]
 
     # Same with 11 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 11)
@@ -245,6 +265,7 @@ def test_bfs(use_approach_1: bool) -> None:
     exp_parents[10] = 7
     assert parents == exp_parents
     assert level == list(range(11))
+    assert ccs == [level]
 
     # Same with 12 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 12)
@@ -257,6 +278,7 @@ def test_bfs(use_approach_1: bool) -> None:
     exp_parents[11] = 7
     assert parents == exp_parents
     assert level == list(range(12))
+    assert ccs == [level]
 
     ### arbitrary custom tree
     g = Graph(
@@ -271,6 +293,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {0: None, 1: 0, 5: 0, 8: 0, 2: 1, 3: 2, 4: 3, 6: 5, 7: 6, 9: 8}
     assert level == [0, 1, 5, 8, 2, 6, 9, 3, 7, 4]
+    assert ccs == [level]
 
     # complete graphs (fully connected, so node 0 should just recurse fully in one pass)
     k = random.randint(4, 10)
@@ -283,6 +306,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {0: None, **{i: 0 for i in range(1, k)}}
     assert level == list(range(k))
+    assert ccs == [level]
 
     # look ahead graph (see example in create_look_ahead_graph docstring)
     g = GraphFactory.create_look_ahead_graph(5, 2)
@@ -294,18 +318,21 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 2}
     assert level == [0, 1, 2, 3, 4]
+    assert ccs == [level]
     # now start from 2
     parents, dists, level, ccs = bfs(
         g, use_approach_1=use_approach_1, seed_order=2, neighbor_order=Order.SORTED
     )
     assert parents == {2: None, 0: 2, 1: 2, 3: 2, 4: 2}
     assert level == [2, 0, 1, 3, 4]
+    assert ccs == [level]
     # now start from 3
     parents, dists, level, ccs = bfs(
         g, use_approach_1=use_approach_1, seed_order=3, neighbor_order=Order.SORTED
     )
     assert parents == {3: None, 1: 3, 2: 3, 4: 3, 0: 1}
     assert level == [3, 1, 2, 4, 0]
+    assert ccs == [level]
 
     # cycles
     g = GraphFactory.create_circuit(4)
@@ -318,18 +345,21 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {0: None, 1: 0, 3: 0, 2: 1}
     assert level == [0, 1, 3, 2]
+    assert ccs == [level]
     # start at 1, neighbors in sorted order
     parents, dists, level, ccs = bfs(
         g, use_approach_1=use_approach_1, seed_order=1, neighbor_order=Order.SORTED
     )
     assert parents == {1: None, 0: 1, 2: 1, 3: 0}
     assert level == [1, 0, 2, 3]
+    assert ccs == [level]
     # start at 3, neighbors in sorted order
     parents, dists, level, ccs = bfs(
         g, use_approach_1=use_approach_1, seed_order=3, neighbor_order=Order.SORTED
     )
     assert parents == {3: None, 0: 3, 2: 3, 1: 0}
     assert level == [3, 0, 2, 1]
+    assert ccs == [level]
 
     ### custom cylic graphs
     # two uneven cycles with 0 at center. I.e., a lopsided figure-8
@@ -357,6 +387,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {0: None, 1: 0, 3: 0, 4: 0, 8: 0, 2: 1, 5: 4, 7: 8, 6: 5}
     assert level == [0, 1, 3, 4, 8, 2, 5, 7, 6]
+    assert ccs == [level]
     # neighbors in reverse order, so larger cycle first, and in the opposite direction
     parents, dists, level, ccs = bfs(
         g,
@@ -366,6 +397,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {0: None, 8: 0, 4: 0, 3: 0, 1: 0, 7: 8, 5: 4, 2: 3, 6: 7}
     assert level == [0, 8, 4, 3, 1, 7, 5, 2, 6]
+    assert ccs == [level]
     # now start at 8
     parents, dists, level, ccs = bfs(
         g,
@@ -375,6 +407,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {8: None, 7: 8, 0: 8, 6: 7, 4: 0, 3: 0, 1: 0, 5: 6, 2: 3}
     assert level == [8, 7, 0, 6, 4, 3, 1, 5, 2]
+    assert ccs == [level]
 
     # add node 9, add 0-9 edge, start at 9
     g.add_node(9)
@@ -387,6 +420,7 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == {9: None, 0: 9, 1: 0, 3: 0, 4: 0, 8: 0, 2: 1, 5: 4, 7: 8, 6: 5}
     assert level == [9, 0, 1, 3, 4, 8, 2, 5, 7, 6]
+    assert ccs == [level]
 
     # graph with a main line with cycles coming off of it
     # we already have the current example, we can just add to that
@@ -466,6 +500,7 @@ def test_bfs(use_approach_1: bool) -> None:
         17,
         18,
     ]
+    assert ccs == [level]
 
     # "nested" cycles
     # 0-1-2-3-4-5-6-7-0
@@ -516,6 +551,7 @@ def test_bfs(use_approach_1: bool) -> None:
         12: 11.0,
     }
     assert level == [0, 1, 7, 2, 6, 3, 8, 10, 5, 4, 9, 11, 13, 12]
+    assert ccs == [level]
     parents, dists, level, ccs = bfs(
         g,
         use_approach_1=use_approach_1,
@@ -539,6 +575,7 @@ def test_bfs(use_approach_1: bool) -> None:
         12: 13,
     }
     assert level == [0, 7, 1, 6, 2, 5, 10, 8, 3, 4, 13, 11, 9, 12]
+    assert ccs == [level]
 
     # test disjoint graphs (disconnected components)
     g_spindly = GraphFactory.create_spindly_tree(3)
@@ -594,8 +631,9 @@ def test_bfs(use_approach_1: bool) -> None:
         exp_level_custom,
     )
     lengths = [len(g) for g in gs]
-    exp_level = []
     exp_parents = {}
+    exp_level = []
+    exp_ccs = []
     for i, (level, parents) in enumerate(zip(exp_levels, exp_parents_seq)):
         offset = sum(lengths[:i])
         exp_parents.update(
@@ -605,6 +643,7 @@ def test_bfs(use_approach_1: bool) -> None:
             }
         )
         exp_level.extend([offset + node for node in level])
+        exp_ccs.append([offset + node for node in level])
     parents, dists, level, ccs = bfs(
         g_combined,
         use_approach_1=use_approach_1,
@@ -613,3 +652,4 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     assert parents == exp_parents
     assert level == exp_level
+    assert ccs == exp_ccs
