@@ -48,7 +48,6 @@ def dfs(
     parents = {}
     for u in seed_nodes:
         if u not in reached:
-            parents[u] = None
             if recursive:
                 _dfs_from_recursive(
                     g, u, neighbor_order, reached, preorder, postorder, parents
@@ -68,6 +67,7 @@ def _dfs_from_recursive(
     preorder: list[Hashable],
     postorder: list[Hashable],
     parents: dict[Hashable, Hashable],
+    parent: Hashable = None,  # only set to non-None when called recursively
 ) -> None:
     """Recursive exploration
 
@@ -84,13 +84,20 @@ def _dfs_from_recursive(
     you could just have it not be present in the mapping, but I'll just choose the convention that a start node's parent
     is None. At least this change is the same for the recursive and iterative implementations though!
     """
+    parents[u] = parent
     reached.add(u)
     preorder.append(u)
     for v in get_ordered_neighbors(g, u, neighbor_order):
         if v not in reached:
-            parents[v] = u
             _dfs_from_recursive(
-                g, v, neighbor_order, reached, preorder, postorder, parents
+                g,
+                v,
+                neighbor_order,
+                reached,
+                preorder,
+                postorder,
+                parents,
+                parent=u,
             )
     postorder.append(u)
 
@@ -195,6 +202,7 @@ def _dfs_from_iterative(
                 to be shared.
         - TODO: check out https://www.youtube.com/watch?v=xLQKdq0Ffjg
     """
+    parents[u] = None
     double_reached = set()
     to_explore = [u]
     while to_explore:
