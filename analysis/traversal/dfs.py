@@ -19,7 +19,7 @@ def dfs(
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
 ) -> tuple[
-    list[Hashable], list[Hashable], dict[Hashable, Hashable], list[list[Hashable]]
+    dict[Hashable, Hashable], list[Hashable], list[Hashable], list[list[Hashable]]
 ]:
     """Depth first search (DFS) implementation.
 
