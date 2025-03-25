@@ -198,7 +198,7 @@ def test_bfs(use_approach_1: bool) -> None:
         seed_order=3,
         neighbor_order=Order.REVERSE_SORTED,
     )
-    parents == exp_parents
+    assert parents == exp_parents
     assert level == [3, 6, 5, 1, 7, 4, 0, 2]
 
     # Same with 9 nodes
