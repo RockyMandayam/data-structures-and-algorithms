@@ -47,13 +47,9 @@ def bfs(
             _bfs_from: Callable = (
                 _bfs_from_approach_1 if use_approach_1 else _bfs_from_approach_2
             )
-            levelorder_from_u, parents_from_u, reached_from_u = _bfs_from(
-                g, u, neighbor_order, reached
-            )
+            levelorder_from_u, parents_from_u = _bfs_from(g, u, neighbor_order, reached)
             levelorder.extend(levelorder_from_u)
             parents.update(parents_from_u)
-            # reached already has all the nodes in reached_from_u, this is just for CC analysis
-            reached_from_seeds.append(reached_from_u)
     return levelorder, parents, reached_from_seeds
 
 
@@ -79,16 +75,14 @@ def _bfs_from_approach_1(
     it doesn't vibe well with reached. I.e., a node is not reached and yet at that point it's enqueued, its
     parent is set!
     """
-    levelorder = []
     parents = {u: None}
     to_explore = [u]
-    reached_from_u = []
+    levelorder = []
     while to_explore:
         u = to_explore.pop(0)
         if u in reached:
             continue
         reached.add(u)
-        reached_from_u.append(u)
         levelorder.append(u)
         for v in get_ordered_neighbors(g, u, neighbor_order):
             # in DFS, we do "if v not in reached"
@@ -97,7 +91,7 @@ def _bfs_from_approach_1(
             if v not in parents:
                 parents[v] = u
                 to_explore.append(v)
-    return levelorder, parents, reached_from_u
+    return levelorder, parents
 
 
 def _bfs_from_approach_2(
@@ -115,11 +109,10 @@ def _bfs_from_approach_2(
     the caller could completely remove reached and just check if a node is in parents... And it just keeps it
     more consistent with the DFS implementation.
     """
-    levelorder = []
     parents = {u: None}
     to_explore = [u]
+    levelorder = []
     reached.add(u)
-    reached_from_u = [u]
     while to_explore:
         u = to_explore.pop(0)
         levelorder.append(u)
@@ -128,5 +121,4 @@ def _bfs_from_approach_2(
                 parents[v] = u
                 to_explore.append(v)
                 reached.add(v)
-                reached_from_u.append(v)
-    return levelorder, parents, reached_from_u
+    return levelorder, parents
