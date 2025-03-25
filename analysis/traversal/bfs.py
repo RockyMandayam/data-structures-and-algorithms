@@ -56,7 +56,7 @@ def bfs(
             parents.update(parents_from_u)
             dists.update(dists_from_u)
             levelorder.extend(levelorder_from_u)
-            ccs.extend(levelorder_from_u)
+            ccs.append(levelorder_from_u)
     # TODO test ccs
     # TODO test dists
     return parents, dists, levelorder, ccs
