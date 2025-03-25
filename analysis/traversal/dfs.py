@@ -48,22 +48,40 @@ def dfs(
     postorder = []
     for u in seed_nodes:
         if u not in reached:
-            _dfs_from: Callable = (
-                _dfs_from_recursive if recursive else _dfs_from_iterative
-            )
+            # _dfs_from: Callable = (
+            #     _dfs_from_recursive if recursive else _dfs_from_iterative
+            # )
             # won't do the same for reached_from_u. Why? Well, for directed graphs, there are times when a node
             # will be reached via a previous _dfs_from call, so inside _dfs_from we still need to pass in reached
             # anyways, but if we have a reached_from_u, it'll just be an extra set to track simultaneously. Instead,
             # since every "seen" node will be "reached" at the end of a _dfs_from call, we can just use the other
             # returned values to determine which nodes were visited in a given call to _dfs_from (preorder_from_u,
             # postorder_from_u, or keys of parents_from_u).
-            parents_from_u, preorder_from_u, postorder_from_u = _dfs_from(
-                g, u, neighbor_order, reached
+            parents_from_u, preorder_from_u, postorder_from_u = dfs_from(
+                g,
+                u,
+                neighbor_order,
+                reached,
+                recursive=recursive,
             )
             parents.update(parents_from_u)
             preorder.extend(preorder_from_u)
             postorder.extend(postorder_from_u)
     return preorder, postorder, parents
+
+
+# TODO test this separately
+def dfs_from(
+    g: Graph,
+    u: Hashable,
+    neighbor_order: Order | None,
+    reached: set | None = None,
+    recursive: bool = False,
+) -> tuple[dict[Hashable, Hashable], list[Hashable], dict[Hashable, Hashable]]:
+    _dfs_from: Callable = _dfs_from_recursive if recursive else _dfs_from_iterative
+    if reached is None:
+        reached = set()
+    return _dfs_from(g, u, neighbor_order, reached)
 
 
 def _dfs_from_recursive(
