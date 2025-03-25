@@ -47,9 +47,9 @@ def bfs(
             _bfs_from: Callable = (
                 _bfs_from_approach_1 if use_approach_1 else _bfs_from_approach_2
             )
-            levelorder_from_u, parents_from_u = _bfs_from(g, u, neighbor_order, reached)
-            levelorder.extend(levelorder_from_u)
+            parents_from_u, levelorder_from_u = _bfs_from(g, u, neighbor_order, reached)
             parents.update(parents_from_u)
+            levelorder.extend(levelorder_from_u)
     return levelorder, parents, reached_from_seeds
 
 
@@ -58,7 +58,7 @@ def _bfs_from_approach_1(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-) -> tuple[list[Hashable], dict[Hashable, Hashable], list[Hashable]]:
+) -> tuple[list[Hashable], list[Hashable], dict[Hashable, Hashable]]:
     """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
     use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
     AND only update parents if a node isn't already in it.
@@ -91,7 +91,7 @@ def _bfs_from_approach_1(
             if v not in parents:
                 parents[v] = u
                 to_explore.append(v)
-    return levelorder, parents
+    return parents, levelorder
 
 
 def _bfs_from_approach_2(
@@ -99,7 +99,7 @@ def _bfs_from_approach_2(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-) -> tuple[list[Hashable], dict[Hashable, Hashable], list[Hashable]]:
+) -> tuple[list[Hashable], list[Hashable], dict[Hashable, Hashable]]:
     """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
     use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
     AND only update parents if a node isn't already in it.
@@ -121,4 +121,4 @@ def _bfs_from_approach_2(
                 parents[v] = u
                 to_explore.append(v)
                 reached.add(v)
-    return levelorder, parents
+    return parents, levelorder
