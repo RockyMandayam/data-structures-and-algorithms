@@ -542,17 +542,26 @@ def test_bfs(use_approach_1: bool) -> None:
 
     # test disjoint graphs (disconnected components)
     g_spindly = GraphFactory.create_spindly_tree(3)
-    parents_spindly = {0: None, 1: 0, 2: 1}
-    level_spindly = list(range(3))
+    exp_parents_spindly = {0: None, 1: 0, 2: 1}
+    exp_level_spindly = list(range(3))
     g_b_ary = GraphFactory.create_b_ary_tree(2, 2)
-    parents_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
-    level_b_ary = [0, 1, 2, 3, 4, 5, 6]
+    exp_parents_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
+    exp_level_b_ary = [0, 1, 2, 3, 4, 5, 6]
     # See 8 node binary example in create_nearly_spindly_b_ary_tree docstring
     g_nearly_spindly_b_ary = GraphFactory.create_nearly_spindly_b_ary_tree(2, 8)
-    parents_nearly_spindly_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
-    level_nearly_spindly_b_ary = list(range(8))
+    exp_parents_nearly_spindly_b_ary = {
+        0: None,
+        1: 0,
+        2: 0,
+        3: 1,
+        4: 1,
+        5: 3,
+        6: 3,
+        7: 5,
+    }
+    exp_level_nearly_spindly_b_ary = list(range(8))
     g_custom = g  # above custom example
-    parents_custom = {
+    exp_parents_custom = {
         0: None,
         1: 0,
         7: 0,
@@ -569,33 +578,38 @@ def test_bfs(use_approach_1: bool) -> None:
         5: 6,
         12: 11.0,
     }
-    level_custom = [0, 1, 7, 2, 6, 3, 8, 10, 5, 4, 9, 11, 13, 12]
+    exp_level_custom = [0, 1, 7, 2, 6, 3, 8, 10, 5, 4, 9, 11, 13, 12]
     gs = (g_spindly, g_b_ary, g_nearly_spindly_b_ary, g_custom)
     g_combined = GraphFactory.concat_int_graphs(gs)
-    parents_seq = (
-        parents_spindly,
-        parents_b_ary,
-        parents_nearly_spindly_b_ary,
-        parents_custom,
+    exp_parents_seq = (
+        exp_parents_spindly,
+        exp_parents_b_ary,
+        exp_parents_nearly_spindly_b_ary,
+        exp_parents_custom,
     )
-    levels = (level_spindly, level_b_ary, level_nearly_spindly_b_ary, level_custom)
+    exp_levels = (
+        exp_level_spindly,
+        exp_level_b_ary,
+        exp_level_nearly_spindly_b_ary,
+        exp_level_custom,
+    )
     lengths = [len(g) for g in gs]
-    level_exp = []
-    parents_exp = {}
-    for i, (level, parents) in enumerate(zip(levels, parents_seq)):
+    exp_level = []
+    exp_parents = {}
+    for i, (level, parents) in enumerate(zip(exp_levels, exp_parents_seq)):
         offset = sum(lengths[:i])
-        parents_exp.update(
+        exp_parents.update(
             {
                 offset + node: offset + parent if parent is not None else None
                 for node, parent in parents.items()
             }
         )
-        level_exp.extend([offset + node for node in level])
+        exp_level.extend([offset + node for node in level])
     parents, dists, level, ccs = bfs(
         g_combined,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
         neighbor_order=Order.SORTED,
     )
-    assert parents == parents_exp
-    assert level == level_exp
+    assert parents == exp_parents
+    assert level == exp_level
