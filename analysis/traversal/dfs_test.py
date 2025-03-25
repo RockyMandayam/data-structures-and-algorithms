@@ -574,60 +574,79 @@ def test_dfs(recursive: bool) -> None:
 
     # test disjoint graphs (disconnected components)
     g_spindly = GraphFactory.create_spindly_tree(3)
-    parents_spindly = {0: None, 1: 0, 2: 1}
-    pre_spindly = list(range(3))
-    post_spindly = pre_spindly[::-1]
+    exp_parents_spindly = {0: None, 1: 0, 2: 1}
+    exp_pre_spindly = list(range(3))
+    exp_post_spindly = exp_pre_spindly[::-1]
     g_b_ary = GraphFactory.create_b_ary_tree(2, 2)
-    parents_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
-    pre_b_ary = [0, 1, 3, 4, 2, 5, 6]
-    post_b_ary = [3, 4, 1, 5, 6, 2, 0]
+    exp_parents_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
+    exp_pre_b_ary = [0, 1, 3, 4, 2, 5, 6]
+    exp_post_b_ary = [3, 4, 1, 5, 6, 2, 0]
     # See 8 node binary example in create_nearly_spindly_b_ary_tree docstring
     g_nearly_spindly_b_ary = GraphFactory.create_nearly_spindly_b_ary_tree(2, 8)
-    parents_nearly_spindly_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
-    pre_nearly_spindly_b_ary = [0, 1, 3, 5, 7, 6, 4, 2]
-    post_nearly_spindly_b_ary = [7, 5, 6, 3, 4, 1, 2, 0]
+    exp_parents_nearly_spindly_b_ary = {
+        0: None,
+        1: 0,
+        2: 0,
+        3: 1,
+        4: 1,
+        5: 3,
+        6: 3,
+        7: 5,
+    }
+    exp_pre_nearly_spindly_b_ary = [0, 1, 3, 5, 7, 6, 4, 2]
+    exp_post_nearly_spindly_b_ary = [7, 5, 6, 3, 4, 1, 2, 0]
     g_custom = g  # above custom example
-    parents_custom = {
+    exp_parents_custom = {
         0: None,
         **{i: i - 1 for i in range(1, 8)},
         8: 2,
         **{i: i - 1 for i in range(9, 14)},
     }
-    pre_custom = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    post_custom = [7, 6, 5, 4, 3, 13, 12, 11, 10, 9, 8, 2, 1, 0]
+    exp_pre_custom = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    exp_post_custom = [7, 6, 5, 4, 3, 13, 12, 11, 10, 9, 8, 2, 1, 0]
     gs = (g_spindly, g_b_ary, g_nearly_spindly_b_ary, g_custom)
     g_combined = GraphFactory.concat_int_graphs(gs)
-    parents_seq = (
-        parents_spindly,
-        parents_b_ary,
-        parents_nearly_spindly_b_ary,
-        parents_custom,
+    exp_parents_seq = (
+        exp_parents_spindly,
+        exp_parents_b_ary,
+        exp_parents_nearly_spindly_b_ary,
+        exp_parents_custom,
     )
-    pres = (pre_spindly, pre_b_ary, pre_nearly_spindly_b_ary, pre_custom)
-    posts = (post_spindly, post_b_ary, post_nearly_spindly_b_ary, post_custom)
+    exp_pres = (
+        exp_pre_spindly,
+        exp_pre_b_ary,
+        exp_pre_nearly_spindly_b_ary,
+        exp_pre_custom,
+    )
+    exp_posts = (
+        exp_post_spindly,
+        exp_post_b_ary,
+        exp_post_nearly_spindly_b_ary,
+        exp_post_custom,
+    )
     lengths = [len(g) for g in gs]
-    parents_exp = {}
-    pre_exp = []
-    post_exp = []
-    ccs_exp = []
-    for i, (pre, post, parents) in enumerate(zip(pres, posts, parents_seq)):
+    exp_parents = {}
+    exp_pre = []
+    exp_post = []
+    exp_ccs = []
+    for i, (pre, post, parents) in enumerate(zip(exp_pres, exp_posts, exp_parents_seq)):
         offset = sum(lengths[:i])
-        parents_exp.update(
+        exp_parents.update(
             {
                 offset + node: offset + parent if parent is not None else None
                 for node, parent in parents.items()
             }
         )
-        pre_exp.extend([offset + node for node in pre])
-        post_exp.extend([offset + node for node in post])
-        ccs_exp.append([offset + node for node in pre])
+        exp_pre.extend([offset + node for node in pre])
+        exp_post.extend([offset + node for node in post])
+        exp_ccs.append([offset + node for node in pre])
     parents, dists, pre, post, ccs = dfs(
         g_combined,
         recursive=recursive,
         seed_order=Order.SORTED,
         neighbor_order=Order.SORTED,
     )
-    assert parents == parents_exp
-    assert pre == pre_exp
-    assert post == post_exp
-    assert ccs == ccs_exp
+    assert parents == exp_parents
+    assert pre == exp_pre
+    assert post == exp_post
+    assert ccs == exp_ccs
