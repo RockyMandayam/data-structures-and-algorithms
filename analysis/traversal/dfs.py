@@ -42,13 +42,12 @@ def dfs(
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
+    parents = {}
     reached = set()
     preorder = []
     postorder = []
-    parents = {}
     for u in seed_nodes:
         if u not in reached:
-            parents[u] = None
             _dfs_from: Callable = (
                 _dfs_from_recursive if recursive else _dfs_from_iterative
             )
@@ -66,6 +65,8 @@ def _dfs_from_recursive(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
+    *,
+    parent: Hashable = None,  # only set to non-None when called recursively
 ) -> tuple[list[Hashable], dict[Hashable, Hashable], dict[Hashable, Hashable]]:
     """Recursive exploration
 
@@ -82,20 +83,22 @@ def _dfs_from_recursive(
     you could just have it not be present in the mapping, but I'll just choose the convention that a start node's parent
     is None. At least this change is the same for the recursive and iterative implementations though!
     """
+    parents = {u: parent}
     reached.add(u)
     preorder = [u]
     postorder = []
-    parents = {}
     for v in get_ordered_neighbors(g, u, neighbor_order):
         if v not in reached:
-            # parents[v] = u
             preorder_from_v, postorder_from_v, parents_from_v = _dfs_from_recursive(
-                g, v, neighbor_order, reached
+                g,
+                v,
+                neighbor_order,
+                reached,
+                parent=u,
             )
             preorder.extend(preorder_from_v)
             postorder.extend(postorder_from_v)
             parents.update(parents_from_v)
-            parents[v] = u
     postorder.append(u)
     return preorder, postorder, parents
 
@@ -197,11 +200,11 @@ def _dfs_from_iterative(
                 to be shared.
         - TODO: check out https://www.youtube.com/watch?v=xLQKdq0Ffjg
     """
+    parents = {u: None}
+    to_explore = [u]
     preorder = []
     postorder = []
     double_reached = set()
-    to_explore = [u]
-    parents = {u: None}
     while to_explore:
         u = to_explore.pop(-1)
         if u in reached:
