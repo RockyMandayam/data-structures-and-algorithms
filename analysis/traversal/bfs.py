@@ -14,7 +14,7 @@ def bfs(
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
     neighbor_order: Order | None = Order.SORTED,
     use_approach_1: bool = True,
-) -> tuple[list[Hashable], dict[Hashable, Hashable]]:
+) -> tuple[list[Hashable], dict[Hashable, Hashable], list[list[Hashable]]]:
     """Breadth first search (BFS) implementation.
 
     This is VERY similar to DFS. It could be implemented in the same function. But because of the different return
@@ -29,20 +29,28 @@ def bfs(
             - If Sequence[Hashable] (sequence of nodes), iterate in the order given by the sequence.
             - NOTE: If seed_order is Hashable and also Sequence[Hashable], it'll be interpreted as Hashable (node)
         neighbor_order: optional order in which to explore neighbors of a node; if not provided, undetermined order.
+
+    Returns:
+        list[Hashable]: level order of nodes in the BFS traversal
+        dict[Hashable, Hashable]: parents dict which encodes the traversal tree
+        list[list[Hashable]]]: list of lists of nodes where each nested list is all nodes reached from one seed, i.e.
+            one call to _bfs_from. For undirected graphs, each nested list is one connected component
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
     reached = set()
     levelorder = []
     parents = {}
+    reached_from_seeds = []
     for u in seed_nodes:
         if u not in reached:
-            parents[u] = None
-            if use_approach_1:
-                _bfs_from_approach_1(g, u, neighbor_order, reached, levelorder, parents)
-            else:
-                _bfs_from_approach_2(g, u, neighbor_order, reached, levelorder, parents)
-    return levelorder, parents
+            _bfs_from: Callable = (
+                _bfs_from_approach_1 if use_approach_1 else _bfs_from_approach_2
+            )
+            parents_from_u, levelorder_from_u = _bfs_from(g, u, neighbor_order, reached)
+            parents.update(parents_from_u)
+            levelorder.extend(levelorder_from_u)
+    return levelorder, parents, reached_from_seeds
 
 
 def _bfs_from_approach_1(
@@ -50,9 +58,7 @@ def _bfs_from_approach_1(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-    levelorder: list[Hashable],
-    parents: dict[Hashable, Hashable],
-) -> None:
+) -> tuple[list[Hashable], list[Hashable], dict[Hashable, Hashable]]:
     """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
     use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
     AND only update parents if a node isn't already in it.
@@ -69,7 +75,9 @@ def _bfs_from_approach_1(
     it doesn't vibe well with reached. I.e., a node is not reached and yet at that point it's enqueued, its
     parent is set!
     """
+    parents = {u: None}
     to_explore = [u]
+    levelorder = []
     while to_explore:
         u = to_explore.pop(0)
         if u in reached:
@@ -83,6 +91,7 @@ def _bfs_from_approach_1(
             if v not in parents:
                 parents[v] = u
                 to_explore.append(v)
+    return parents, levelorder
 
 
 def _bfs_from_approach_2(
@@ -90,9 +99,7 @@ def _bfs_from_approach_2(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-    levelorder: list[Hashable],
-    parents: dict[Hashable, Hashable],
-) -> None:
+) -> tuple[list[Hashable], list[Hashable], dict[Hashable, Hashable]]:
     """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
     use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
     AND only update parents if a node isn't already in it.
@@ -102,7 +109,9 @@ def _bfs_from_approach_2(
     the caller could completely remove reached and just check if a node is in parents... And it just keeps it
     more consistent with the DFS implementation.
     """
+    parents = {u: None}
     to_explore = [u]
+    levelorder = []
     reached.add(u)
     while to_explore:
         u = to_explore.pop(0)
@@ -112,3 +121,4 @@ def _bfs_from_approach_2(
                 parents[v] = u
                 to_explore.append(v)
                 reached.add(v)
+    return parents, levelorder
