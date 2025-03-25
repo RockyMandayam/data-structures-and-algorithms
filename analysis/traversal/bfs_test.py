@@ -39,6 +39,7 @@ def test_bfs(use_approach_1: bool) -> None:
         parents, dists, level, ccs = bfs(
             g, use_approach_1=use_approach_1, seed_order=Order.SORTED
         )
+        assert parents == {u: None for u in range(n)}
         assert level == list(range(n)), n
         # seeds in reverse sorted order
         parents, dists, level, ccs = bfs(

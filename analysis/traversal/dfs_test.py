@@ -41,6 +41,7 @@ def test_dfs(recursive: bool) -> None:
         parents, dists, pre, post, ccs = dfs(
             g, recursive=recursive, seed_order=Order.SORTED
         )
+        assert parents == {u: None for u in range(n)}
         assert pre == list(range(n)), n
         assert post == pre, n
         # seeds in reverse sorted order
