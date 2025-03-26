@@ -69,7 +69,7 @@ def test_dfs(recursive: bool) -> None:
             g, recursive=recursive, seed_order=Order.SORTED
         )
         assert parents == {0: None, **{u: u - 1 for u in range(1, n)}}
-        assert dists == {0: 0, **{u: u for u in range(1, n)}}
+        assert dists == {u: u for u in range(n)}
         assert pre == list(range(n)), n
         assert post == pre[::-1]
         assert ccs == [pre]
@@ -78,7 +78,7 @@ def test_dfs(recursive: bool) -> None:
             g, recursive=recursive, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {n - 1: None, **{u: u + 1 for u in range(n - 1)}}
-        assert dists == {n - 1: 0, **{u: n - 1 - u for u in range(n - 1)}}
+        assert dists == {u: n - 1 - u for u in range(n)}
         assert pre == list(range(n - 1, -1, -1)), n
         assert post == pre[::-1]
         assert ccs == [pre]
