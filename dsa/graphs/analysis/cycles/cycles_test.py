@@ -1,9 +1,9 @@
 import pytest
 
-from graphs.analysis.cycles.cycles import contains_cycle
-from graphs.analysis.traversal_type import TraversalType
-from graphs.graph import Graph
-from graphs.graph_factory import GraphFactory
+from dsa.graphs.analysis.cycles.cycles import contains_cycle
+from dsa.graphs.analysis.traversal_type import TraversalType
+from dsa.graphs.graph import Graph
+from dsa.graphs.graph_factory import GraphFactory
 
 
 @pytest.mark.parametrize("traversal_type", (TraversalType.DFS, TraversalType.BFS))

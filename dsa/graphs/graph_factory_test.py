@@ -2,8 +2,8 @@ import random
 
 import pytest
 
-from graphs.graph import Graph
-from graphs.graph_factory import GraphFactory
+from dsa.graphs.graph import Graph
+from dsa.graphs.graph_factory import GraphFactory
 
 
 class TestGraphFactory:

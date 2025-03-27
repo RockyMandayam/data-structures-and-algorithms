@@ -1,7 +1,7 @@
-from graphs.analysis.traversal.bfs import bfs
-from graphs.analysis.traversal.dfs import dfs
-from graphs.analysis.traversal_type import TraversalType
-from graphs.graph import Graph
+from dsa.graphs.analysis.traversal.bfs import bfs
+from dsa.graphs.analysis.traversal.dfs import dfs
+from dsa.graphs.analysis.traversal_type import TraversalType
+from dsa.graphs.graph import Graph
 
 
 def contains_cycle(g: Graph, traversal_type: TraversalType = TraversalType.DFS) -> bool:

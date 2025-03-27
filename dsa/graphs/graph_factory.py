@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-from graphs.graph import Graph
+from dsa.graphs.graph import Graph
 
 
 class GraphFactory:
@@ -14,8 +14,8 @@ class GraphFactory:
         So graphs[0] has nodes 0,1,2 and edges (0,1),(0,2),(1,2).
         And graphs[1] has nodes 0,1,2,3 and edges (0,1),(1,2),(2,3),(3,4)
         The concatenated graph is:
-        nodes: 0,1,2,3,4,5,6,7 where 0,1,2 are from graphs[0] and 3,4,5,6,7 are from graphs[1]
-        edges: (0,1),(0,2),(1,2) from graphs[0] and (3,4),(4,5),(5,6),(6,7) from graphs[1]
+        nodes: 0,1,2,3,4,5,6,7 where 0,1,2 are from dsa.graphs[0] and 3,4,5,6,7 are from dsa.graphs[1]
+        edges: (0,1),(0,2),(1,2) from dsa.graphs[0] and (3,4),(4,5),(5,6),(6,7) from dsa.graphs[1]
         """
         # concat_nodes = []
         num_nodes = 0

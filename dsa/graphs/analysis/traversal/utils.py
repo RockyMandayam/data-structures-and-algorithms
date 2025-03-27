@@ -1,7 +1,7 @@
 from collections.abc import Hashable, Sequence
 
-from graphs.analysis.traversal.order import Order
-from graphs.graph import Graph
+from dsa.graphs.analysis.traversal.order import Order
+from dsa.graphs.graph import Graph
 
 
 def get_ordered_neighbors(
