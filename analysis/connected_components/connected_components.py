@@ -21,7 +21,7 @@ def get_connected_components(
     if traversal_type == TraversalType.DFS:
         *_, ccs, _ = dfs(g)
     elif traversal_type == TraversalType.BFS:
-        *_, ccs, _ = bfs
+        *_, ccs, _ = bfs(g)
     else:
         raise ValueError(f"Unrecognized {traversal_type=}")
     return ccs
