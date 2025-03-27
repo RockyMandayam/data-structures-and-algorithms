@@ -24,6 +24,7 @@ def test_dfs(recursive: bool) -> None:
     g = Graph()
     parents, dists, pre, post, ccs = dfs(g, recursive=recursive)
     assert parents == {}
+    assert dists == {}
     assert pre == []
     assert post == []
 
@@ -31,6 +32,7 @@ def test_dfs(recursive: bool) -> None:
     g = Graph(nodes=1)
     parents, dists, pre, post, ccs = dfs(g, recursive=recursive)
     assert parents == {0: None}
+    assert dists == {0: 0}
     assert pre == [0]
     assert post == [0]
     assert ccs == [[0]]
@@ -43,6 +45,7 @@ def test_dfs(recursive: bool) -> None:
             g, recursive=recursive, seed_order=Order.SORTED
         )
         assert parents == {u: None for u in range(n)}
+        assert dists == {u: 0 for u in range(n)}
         assert pre == list(range(n)), n
         assert post == pre, n
         assert ccs == [[i] for i in range(n)]
@@ -51,6 +54,7 @@ def test_dfs(recursive: bool) -> None:
             g, recursive=recursive, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {u: None for u in range(n)}
+        assert dists == {u: 0 for u in range(n)}
         assert pre == list(range(n - 1, -1, -1)), n
         assert post == pre, n
         assert ccs == [[i] for i in range(n - 1, -1, -1)]
@@ -65,6 +69,7 @@ def test_dfs(recursive: bool) -> None:
             g, recursive=recursive, seed_order=Order.SORTED
         )
         assert parents == {0: None, **{u: u - 1 for u in range(1, n)}}
+        assert dists == {u: u for u in range(n)}
         assert pre == list(range(n)), n
         assert post == pre[::-1]
         assert ccs == [pre]
@@ -73,6 +78,7 @@ def test_dfs(recursive: bool) -> None:
             g, recursive=recursive, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {n - 1: None, **{u: u + 1 for u in range(n - 1)}}
+        assert dists == {u: n - 1 - u for u in range(n)}
         assert pre == list(range(n - 1, -1, -1)), n
         assert post == pre[::-1]
         assert ccs == [pre]
@@ -90,7 +96,13 @@ def test_dfs(recursive: bool) -> None:
             **{u: u + 1 for u in range(dfs_root)},
             **{u: u - 1 for u in range(dfs_root + 1, n)},
         }
+        exp_dists = {
+            dfs_root: 0,
+            **{u: dfs_root - u for u in range(dfs_root)},
+            **{u: u - dfs_root for u in range(dfs_root + 1, n)},
+        }
         assert parents == exp_parents
+        assert dists == exp_dists
         assert pre == [dfs_root, *to_left, *to_right]
         assert post == [*to_left[::-1], *to_right[::-1], dfs_root]
         assert ccs == [pre]
@@ -102,6 +114,7 @@ def test_dfs(recursive: bool) -> None:
             neighbor_order=Order.REVERSE_SORTED,
         )
         assert parents == exp_parents
+        assert dists == exp_dists
         assert pre == [dfs_root, *to_right, *to_left]
         assert post == [*to_right[::-1], *to_left[::-1], dfs_root]
         assert ccs == [pre]
@@ -115,7 +128,9 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     exp_parents = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
+    exp_dists = {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 2, 6: 2}
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [0, 1, 3, 4, 2, 5, 6]
     assert post == [3, 4, 1, 5, 6, 2, 0]
     assert ccs == [pre]
@@ -127,6 +142,7 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [0, 2, 6, 5, 1, 4, 3]
     assert post == [6, 5, 2, 4, 3, 1, 0]
     assert ccs == [pre]
@@ -138,7 +154,9 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     exp_parents = {6: None, 2: 6, 5: 2, 0: 2, 1: 0, 3: 1, 4: 1}
+    exp_dists = {6: 0, 2: 1, 5: 2, 0: 2, 1: 3, 3: 4, 4: 4}
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [6, 2, 0, 1, 3, 4, 5]
     assert post == [3, 4, 1, 0, 5, 2, 6]
     assert ccs == [pre]
@@ -150,6 +168,7 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [6, 2, 5, 0, 1, 4, 3]
     assert post == [5, 4, 3, 1, 0, 2, 6]
     assert ccs == [pre]
@@ -161,7 +180,9 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     exp_parents = {1: None, 3: 1, 4: 1, 0: 1, 2: 0, 5: 2, 6: 2}
+    exp_dists = {1: 0, 3: 1, 4: 1, 0: 1, 2: 2, 5: 3, 6: 3}
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [1, 0, 2, 5, 6, 3, 4]
     assert post == [5, 6, 2, 0, 3, 4, 1]
     assert ccs == [pre]
@@ -173,6 +194,7 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [1, 4, 3, 0, 2, 6, 5]
     assert post == [4, 3, 6, 5, 2, 0, 1]
     assert ccs == [pre]
@@ -185,6 +207,7 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
+    assert dists == {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4}
     assert pre == [0, 1, 3, 5, 7, 6, 4, 2]
     assert post == [7, 5, 6, 3, 4, 1, 2, 0]
     assert ccs == [pre]
@@ -196,7 +219,9 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     exp_parents = {3: None, 5: 3, 6: 3, 7: 5, 1: 3, 4: 1, 0: 1, 2: 0}
+    exp_dists = {3: 0, 5: 1, 6: 1, 7: 2, 1: 1, 4: 2, 0: 2, 2: 3}
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [3, 1, 0, 2, 4, 5, 7, 6]
     assert post == [2, 0, 4, 1, 7, 5, 6, 3]
     assert ccs == [pre]
@@ -208,16 +233,18 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [3, 6, 5, 7, 1, 4, 0, 2]
     assert post == [6, 7, 5, 4, 2, 0, 1, 3]
     assert ccs == [pre]
 
-    # Same with 9 nodes
+    # Another nearly spindly binary tree but with 9 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 9)
     parents, dists, pre, post, ccs = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5, 8: 5}
+    assert dists == {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4}
     assert pre == [0, 1, 3, 5, 7, 8, 6, 4, 2]
     assert post == [7, 8, 5, 6, 3, 4, 1, 2, 0]
     assert ccs == [pre]
@@ -229,6 +256,7 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {8: None, 5: 8, 7: 5, 3: 5, 6: 3, 1: 3, 4: 1, 0: 1, 2: 0}
+    assert dists == {8: 0, 5: 1, 7: 2, 3: 2, 6: 3, 1: 3, 4: 4, 0: 4, 2: 5}
     assert pre == [8, 5, 3, 1, 0, 2, 4, 6, 7]
     assert post == [2, 0, 4, 1, 6, 3, 7, 5, 8]
     assert ccs == [pre]
@@ -239,7 +267,9 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     exp_parents = {0: None, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 4, 8: 4, 9: 4}
+    exp_dists = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 2, 6: 2, 7: 3, 8: 3, 9: 3}
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [0, 1, 4, 7, 8, 9, 5, 6, 2, 3]
     assert post == [7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
     assert ccs == [pre]
@@ -250,7 +280,9 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     exp_parents[10] = 7
+    exp_dists[10] = 4
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [0, 1, 4, 7, 10, 8, 9, 5, 6, 2, 3]
     assert post == [10, 7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
     assert ccs == [pre]
@@ -261,7 +293,9 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     exp_parents[11] = 7
+    exp_dists[11] = 4
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == [0, 1, 4, 7, 10, 11, 8, 9, 5, 6, 2, 3]
     assert post == [10, 11, 7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
     assert ccs == [pre]
@@ -275,6 +309,7 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, 1: 0, 5: 0, 8: 0, 2: 1, 3: 2, 4: 3, 6: 5, 7: 6, 9: 8}
+    assert dists == {0: 0, 1: 1, 5: 1, 8: 1, 2: 2, 3: 3, 4: 4, 6: 2, 7: 3, 9: 2}
     assert pre == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     assert post == [4, 3, 2, 1, 7, 6, 5, 9, 8, 0]
     assert ccs == [pre]
@@ -287,6 +322,7 @@ def test_dfs(recursive: bool) -> None:
     )
     exp_path = list(range(k))
     assert parents == {0: None, **{i: i - 1 for i in range(1, k)}}
+    assert dists == {0: 0, **{i: i for i in range(1, k)}}
     assert pre == exp_path
     assert post == exp_path[::-1]
     assert ccs == [pre]
@@ -297,6 +333,7 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, 1: 0, 2: 1, 3: 2, 4: 3}
+    assert dists == {0: 0, 1: 1, 2: 2, 3: 3, 4: 4}
     assert pre == [0, 1, 2, 3, 4]
     assert post == pre[::-1]
     assert ccs == [pre]
@@ -305,6 +342,7 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=2, neighbor_order=Order.SORTED
     )
     assert parents == {2: None, 0: 2, 1: 0, 3: 1, 4: 3}
+    assert dists == {2: 0, 0: 1, 1: 2, 3: 3, 4: 4}
     assert pre == [2, 0, 1, 3, 4]
     assert post == pre[::-1]
     assert ccs == [pre]
@@ -313,6 +351,7 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=3, neighbor_order=Order.SORTED
     )
     assert parents == {3: None, 1: 3, 0: 1, 2: 0, 4: 2}
+    assert dists == {3: 0, 1: 1, 0: 2, 2: 3, 4: 4}
     assert pre == [3, 1, 0, 2, 4]
     assert post == pre[::-1]
     assert ccs == [pre]
@@ -324,6 +363,7 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, **{i: i - 1 for i in range(1, 4)}}
+    assert dists == {0: 0, **{i: i for i in range(1, 4)}}
     assert pre == [0, 1, 2, 3]
     assert post == pre[::-1]
     assert ccs == [pre]
@@ -332,6 +372,7 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=1, neighbor_order=Order.SORTED
     )
     assert parents == {1: None, 0: 1, 3: 0, 2: 3}
+    assert dists == {1: 0, 0: 1, 3: 2, 2: 3}
     assert pre == [1, 0, 3, 2]
     assert post == pre[::-1]
     assert ccs == [pre]
@@ -340,6 +381,7 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=3, neighbor_order=Order.SORTED
     )
     assert parents == {3: None, 0: 3, 1: 0, 2: 1}
+    assert dists == {3: 0, 0: 1, 1: 2, 2: 3}
     assert pre == [3, 0, 1, 2]
     assert post == pre[::-1]
     assert ccs == [pre]
@@ -366,6 +408,7 @@ def test_dfs(recursive: bool) -> None:
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, 1: 0, 2: 1, 3: 2, 4: 0, 5: 4, 6: 5, 7: 6, 8: 7}
+    assert dists == {0: 0, 1: 1, 2: 2, 3: 3, 4: 1, 5: 2, 6: 3, 7: 4, 8: 5}
     assert pre == [0, 1, 2, 3, 4, 5, 6, 7, 8]
     assert post == [3, 2, 1, 8, 7, 6, 5, 4, 0]
     assert ccs == [pre]
@@ -377,6 +420,7 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == {0: None, 8: 0, 7: 8, 6: 7, 5: 6, 4: 5, 3: 0, 2: 3, 1: 2}
+    assert dists == {0: 0, 8: 1, 7: 2, 6: 3, 5: 4, 4: 5, 3: 1, 2: 2, 1: 3}
     assert pre == [0, 8, 7, 6, 5, 4, 3, 2, 1]
     assert post == [4, 5, 6, 7, 8, 1, 2, 3, 0]
     assert ccs == [pre]
@@ -388,6 +432,7 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == {8: None, 7: 8, 6: 7, 5: 6, 4: 5, 0: 4, 3: 0, 2: 3, 1: 2}
+    assert dists == {8: 0, 7: 1, 6: 2, 5: 3, 4: 4, 0: 5, 3: 6, 2: 7, 1: 8}
     assert pre == [8, 7, 6, 5, 4, 0, 3, 2, 1]
     assert post == [1, 2, 3, 0, 4, 5, 6, 7, 8]
     assert ccs == [pre]
@@ -402,6 +447,7 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {9: None, 0: 9, 1: 0, 2: 1, 3: 2, 4: 0, 5: 4, 6: 5, 7: 6, 8: 7}
+    assert dists == {9: 0, 0: 1, 1: 2, 2: 3, 3: 4, 4: 2, 5: 3, 6: 4, 7: 5, 8: 6}
     assert pre == [9, 0, 1, 2, 3, 4, 5, 6, 7, 8]
     assert post == [3, 2, 1, 8, 7, 6, 5, 4, 0, 9]
     assert ccs == [pre]
@@ -460,6 +506,29 @@ def test_dfs(recursive: bool) -> None:
         18: 17,
         19: 18,
         20: 19,
+    }
+    assert dists == {
+        9: 0,
+        0: 1,
+        1: 2,
+        2: 3,
+        3: 4,
+        4: 2,
+        5: 3,
+        6: 4,
+        7: 5,
+        8: 6,
+        10: 2,
+        11: 3,
+        12: 4,
+        13: 5,
+        14: 4,
+        15: 5,
+        16: 6,
+        17: 7,
+        18: 8,
+        19: 9,
+        20: 10,
     }
     assert pre == [
         9,
@@ -543,6 +612,12 @@ def test_dfs(recursive: bool) -> None:
         8: 2,
         **{i: i - 1 for i in range(9, 14)},
     }
+    assert dists == {
+        0: 0,
+        **{i: i for i in range(1, 8)},
+        8: 3,
+        **{i: i - 5 for i in range(9, 14)},
+    }
     assert pre == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     assert post == [7, 6, 5, 4, 3, 13, 12, 11, 10, 9, 8, 2, 1, 0]
     assert ccs == [pre]
@@ -568,6 +643,22 @@ def test_dfs(recursive: bool) -> None:
         8: 9,
         1: 2,
     }
+    assert dists == {
+        0: 0,
+        7: 1,
+        6: 2,
+        5: 3,
+        4: 4,
+        3: 5,
+        2: 6,
+        10: 7,  # to go 13
+        13: 8,
+        12: 9,
+        11: 10,
+        9: 8,
+        8: 9,
+        1: 7,
+    }
     assert pre == [0, 7, 6, 5, 4, 3, 2, 10, 13, 12, 11, 9, 8, 1]
     assert post == [11, 12, 13, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 0]
     assert ccs == [pre]
@@ -575,10 +666,12 @@ def test_dfs(recursive: bool) -> None:
     # test disjoint graphs (disconnected components)
     g_spindly = GraphFactory.create_spindly_tree(3)
     exp_parents_spindly = {0: None, 1: 0, 2: 1}
+    exp_dists_spindly = {0: 0, 1: 1, 2: 2}
     exp_pre_spindly = list(range(3))
     exp_post_spindly = exp_pre_spindly[::-1]
     g_b_ary = GraphFactory.create_b_ary_tree(2, 2)
     exp_parents_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
+    exp_dists_b_ary = {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 2, 6: 2}
     exp_pre_b_ary = [0, 1, 3, 4, 2, 5, 6]
     exp_post_b_ary = [3, 4, 1, 5, 6, 2, 0]
     # See 8 node binary example in create_nearly_spindly_b_ary_tree docstring
@@ -593,6 +686,16 @@ def test_dfs(recursive: bool) -> None:
         6: 3,
         7: 5,
     }
+    exp_dists_nearly_spindly_b_ary = {
+        0: 0,
+        1: 1,
+        2: 1,
+        3: 2,
+        4: 2,
+        5: 3,
+        6: 3,
+        7: 4,
+    }
     exp_pre_nearly_spindly_b_ary = [0, 1, 3, 5, 7, 6, 4, 2]
     exp_post_nearly_spindly_b_ary = [7, 5, 6, 3, 4, 1, 2, 0]
     g_custom = g  # above custom example
@@ -601,6 +704,12 @@ def test_dfs(recursive: bool) -> None:
         **{i: i - 1 for i in range(1, 8)},
         8: 2,
         **{i: i - 1 for i in range(9, 14)},
+    }
+    exp_dists_custom = {
+        0: 0,
+        **{i: i for i in range(1, 8)},
+        8: 3,
+        **{i: i - 5 for i in range(9, 14)},
     }
     exp_pre_custom = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     exp_post_custom = [7, 6, 5, 4, 3, 13, 12, 11, 10, 9, 8, 2, 1, 0]
@@ -611,6 +720,12 @@ def test_dfs(recursive: bool) -> None:
         exp_parents_b_ary,
         exp_parents_nearly_spindly_b_ary,
         exp_parents_custom,
+    )
+    exp_dists_seq = (
+        exp_dists_spindly,
+        exp_dists_b_ary,
+        exp_dists_nearly_spindly_b_ary,
+        exp_dists_custom,
     )
     exp_pres = (
         exp_pre_spindly,
@@ -626,10 +741,13 @@ def test_dfs(recursive: bool) -> None:
     )
     lengths = [len(g) for g in gs]
     exp_parents = {}
+    exp_dists = {}
     exp_pre = []
     exp_post = []
     exp_ccs = []
-    for i, (pre, post, parents) in enumerate(zip(exp_pres, exp_posts, exp_parents_seq)):
+    for i, (pre, post, parents, dists) in enumerate(
+        zip(exp_pres, exp_posts, exp_parents_seq, exp_dists_seq)
+    ):
         offset = sum(lengths[:i])
         exp_parents.update(
             {
@@ -637,6 +755,7 @@ def test_dfs(recursive: bool) -> None:
                 for node, parent in parents.items()
             }
         )
+        exp_dists.update({offset + node: dist for node, dist in dists.items()})
         exp_pre.extend([offset + node for node in pre])
         exp_post.extend([offset + node for node in post])
         exp_ccs.append([offset + node for node in pre])
@@ -647,6 +766,7 @@ def test_dfs(recursive: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == exp_parents
+    assert dists == exp_dists
     assert pre == exp_pre
     assert post == exp_post
     assert ccs == exp_ccs
