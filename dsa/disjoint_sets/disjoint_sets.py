@@ -29,11 +29,20 @@ class DisjointSets:
             raise ValueError(f"Unrecognized element {e=}")
 
     def _find_root(self, e: Hashable) -> Hashable:
-        if e is None:
-            raise ValueError(f"None is not a valid element.")
+        self._validate_element(e)
+
+        # find root
+        root = e
+        while self.parents[root] is not None:
+            root = self.parents[root]
+
+        # path compression
         while self.parents[e] is not None:
-            e = self.parents[e]
-        return e
+            parent = self.parents[e]
+            self.parents[e] = root
+            e = parent
+
+        return root
 
     def connect(self, e1: Hashable, e2: Hashable) -> None:
         # not calling is_connected to avoid duplicate work of finding roots
