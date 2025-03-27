@@ -22,26 +22,28 @@ def test_dfs(recursive: bool) -> None:
 
     # empty graph
     g = Graph()
-    parents, dists, pre, post, ccs = dfs(g, recursive=recursive)
+    parents, dists, pre, post, ccs, contains_cycle = dfs(g, recursive=recursive)
     assert parents == {}
     assert dists == {}
     assert pre == []
     assert post == []
+    assert not contains_cycle
 
     # singleton graph
     g = Graph(nodes=1)
-    parents, dists, pre, post, ccs = dfs(g, recursive=recursive)
+    parents, dists, pre, post, ccs, contains_cycle = dfs(g, recursive=recursive)
     assert parents == {0: None}
     assert dists == {0: 0}
     assert pre == [0]
     assert post == [0]
     assert ccs == [[0]]
+    assert not contains_cycle
 
     # generally: n nodes, 0 edges
     for n in (2, 3, random.randint(4, MAX_TEST_GRAPH_SIZE)):
         g = Graph(nodes=n)
         # seeds in sorted order
-        parents, dists, pre, post, ccs = dfs(
+        parents, dists, pre, post, ccs, contains_cycle = dfs(
             g, recursive=recursive, seed_order=Order.SORTED
         )
         assert parents == {u: None for u in range(n)}
@@ -49,8 +51,9 @@ def test_dfs(recursive: bool) -> None:
         assert pre == list(range(n)), n
         assert post == pre, n
         assert ccs == [[i] for i in range(n)]
+        assert not contains_cycle
         # seeds in reverse sorted order
-        parents, dists, pre, post, ccs = dfs(
+        parents, dists, pre, post, ccs, contains_cycle = dfs(
             g, recursive=recursive, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {u: None for u in range(n)}
@@ -58,6 +61,7 @@ def test_dfs(recursive: bool) -> None:
         assert pre == list(range(n - 1, -1, -1)), n
         assert post == pre, n
         assert ccs == [[i] for i in range(n - 1, -1, -1)]
+        assert not contains_cycle
 
     ### spindly trees
 
@@ -65,7 +69,7 @@ def test_dfs(recursive: bool) -> None:
     for n in (2, 3, random.randint(4, MAX_TEST_GRAPH_SIZE)):
         g = GraphFactory.create_spindly_tree(n)
         # in sorted order
-        parents, dists, pre, post, ccs = dfs(
+        parents, dists, pre, post, ccs, contains_cycle = dfs(
             g, recursive=recursive, seed_order=Order.SORTED
         )
         assert parents == {0: None, **{u: u - 1 for u in range(1, n)}}
@@ -73,8 +77,9 @@ def test_dfs(recursive: bool) -> None:
         assert pre == list(range(n)), n
         assert post == pre[::-1]
         assert ccs == [pre]
+        assert not contains_cycle
         # in reverse sorted order
-        parents, dists, pre, post, ccs = dfs(
+        parents, dists, pre, post, ccs, contains_cycle = dfs(
             g, recursive=recursive, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {n - 1: None, **{u: u + 1 for u in range(n - 1)}}
@@ -82,13 +87,14 @@ def test_dfs(recursive: bool) -> None:
         assert pre == list(range(n - 1, -1, -1)), n
         assert post == pre[::-1]
         assert ccs == [pre]
+        assert not contains_cycle
         # branch from the middle
         dfs_root = random.randint(1, n - 1)
         to_left = list(range(dfs_root - 1, -1, -1))  # from middle to the left
         to_right = list(range(dfs_root + 1, n))  # from middle to the right
         # important that dfs_root is first; everything else is irrelevant
         # explore left then right
-        parents, dists, pre, post, ccs = dfs(
+        parents, dists, pre, post, ccs, contains_cycle = dfs(
             g, recursive=recursive, seed_order=dfs_root, neighbor_order=Order.SORTED
         )
         exp_parents = {
@@ -106,8 +112,9 @@ def test_dfs(recursive: bool) -> None:
         assert pre == [dfs_root, *to_left, *to_right]
         assert post == [*to_left[::-1], *to_right[::-1], dfs_root]
         assert ccs == [pre]
+        assert not contains_cycle
         # explore right then left
-        parents, dists, pre, post, ccs = dfs(
+        parents, dists, pre, post, ccs, contains_cycle = dfs(
             g,
             recursive=recursive,
             seed_order=dfs_root,
@@ -118,13 +125,14 @@ def test_dfs(recursive: bool) -> None:
         assert pre == [dfs_root, *to_right, *to_left]
         assert post == [*to_right[::-1], *to_left[::-1], dfs_root]
         assert ccs == [pre]
+        assert not contains_cycle
 
     ### binary trees
 
     # simple binary tree (see create_b_ary_tree docstring for example)
     g = GraphFactory.create_b_ary_tree(2, 2)
     # starting from 0, neighbors in sorted order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     exp_parents = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
@@ -134,8 +142,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 3, 4, 2, 5, 6]
     assert post == [3, 4, 1, 5, 6, 2, 0]
     assert ccs == [pre]
+    assert not contains_cycle
     # starting from 0, neighbors in reverse order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=Order.SORTED,
@@ -146,8 +155,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 2, 6, 5, 1, 4, 3]
     assert post == [6, 5, 2, 4, 3, 1, 0]
     assert ccs == [pre]
+    assert not contains_cycle
     # starting from 6, neighbors in sorted order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=Order.REVERSE_SORTED,
@@ -160,8 +170,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [6, 2, 0, 1, 3, 4, 5]
     assert post == [3, 4, 1, 0, 5, 2, 6]
     assert ccs == [pre]
+    assert not contains_cycle
     # starting from 6, neighbors in reverse order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=Order.REVERSE_SORTED,
@@ -172,8 +183,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [6, 2, 5, 0, 1, 4, 3]
     assert post == [5, 4, 3, 1, 0, 2, 6]
     assert ccs == [pre]
+    assert not contains_cycle
     # starting from 1
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=1,
@@ -186,8 +198,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [1, 0, 2, 5, 6, 3, 4]
     assert post == [5, 6, 2, 0, 3, 4, 1]
     assert ccs == [pre]
+    assert not contains_cycle
     # now neighbors in reverse order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=1,
@@ -198,12 +211,13 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [1, 4, 3, 0, 2, 6, 5]
     assert post == [4, 3, 6, 5, 2, 0, 1]
     assert ccs == [pre]
+    assert not contains_cycle
 
     ### nearly spindly trees
 
     # See 8 node binary example in create_nearly_spindly_b_ary_tree docstring
     g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 8)
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
@@ -211,8 +225,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 3, 5, 7, 6, 4, 2]
     assert post == [7, 5, 6, 3, 4, 1, 2, 0]
     assert ccs == [pre]
+    assert not contains_cycle
     # start from node 3 (arbitrarily chosen), neighbors in sorted order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=3,
@@ -225,8 +240,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [3, 1, 0, 2, 4, 5, 7, 6]
     assert post == [2, 0, 4, 1, 7, 5, 6, 3]
     assert ccs == [pre]
+    assert not contains_cycle
     # now with neighbors in reverse order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=3,
@@ -237,10 +253,11 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [3, 6, 5, 7, 1, 4, 0, 2]
     assert post == [6, 7, 5, 4, 2, 0, 1, 3]
     assert ccs == [pre]
+    assert not contains_cycle
 
     # Another nearly spindly binary tree but with 9 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 9)
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5, 8: 5}
@@ -248,8 +265,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 3, 5, 7, 8, 6, 4, 2]
     assert post == [7, 8, 5, 6, 3, 4, 1, 2, 0]
     assert ccs == [pre]
+    assert not contains_cycle
     # start from node 8, neighbors in sorted order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=8,
@@ -260,10 +278,11 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [8, 5, 3, 1, 0, 2, 4, 6, 7]
     assert post == [2, 0, 4, 1, 6, 3, 7, 5, 8]
     assert ccs == [pre]
+    assert not contains_cycle
 
     # See 10 node 3-ary example in create_nearly_spindly_b_ary_tree docstring
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 10)
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     exp_parents = {0: None, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 4, 8: 4, 9: 4}
@@ -273,10 +292,11 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 4, 7, 8, 9, 5, 6, 2, 3]
     assert post == [7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
     assert ccs == [pre]
+    assert not contains_cycle
 
     # Same with 11 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 11)
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     exp_parents[10] = 7
@@ -286,10 +306,11 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 4, 7, 10, 8, 9, 5, 6, 2, 3]
     assert post == [10, 7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
     assert ccs == [pre]
+    assert not contains_cycle
 
     # Same with 12 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 12)
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     exp_parents[11] = 7
@@ -299,13 +320,14 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 4, 7, 10, 11, 8, 9, 5, 6, 2, 3]
     assert post == [10, 11, 7, 8, 9, 4, 5, 6, 1, 2, 3, 0]
     assert ccs == [pre]
+    assert not contains_cycle
 
     ### arbitrary custom tree
     g = Graph(
         nodes=range(10),
         edges=((0, 1), (1, 2), (2, 3), (3, 4), (0, 5), (5, 6), (6, 7), (0, 8), (8, 9)),
     )
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, 1: 0, 5: 0, 8: 0, 2: 1, 3: 2, 4: 3, 6: 5, 7: 6, 9: 8}
@@ -313,11 +335,12 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     assert post == [4, 3, 2, 1, 7, 6, 5, 9, 8, 0]
     assert ccs == [pre]
+    assert not contains_cycle
 
     # complete graphs (fully connected, so node 0 should just recurse fully in one pass)
     k = random.randint(4, 10)
     g = GraphFactory.create_complete_graph(k)
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     exp_path = list(range(k))
@@ -326,10 +349,11 @@ def test_dfs(recursive: bool) -> None:
     assert pre == exp_path
     assert post == exp_path[::-1]
     assert ccs == [pre]
+    assert contains_cycle
 
     # look ahead graph (see example in create_look_ahead_graph docstring)
     g = GraphFactory.create_look_ahead_graph(5, 2)
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, 1: 0, 2: 1, 3: 2, 4: 3}
@@ -337,8 +361,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 2, 3, 4]
     assert post == pre[::-1]
     assert ccs == [pre]
+    assert contains_cycle
     # now start from 2
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=2, neighbor_order=Order.SORTED
     )
     assert parents == {2: None, 0: 2, 1: 0, 3: 1, 4: 3}
@@ -346,8 +371,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [2, 0, 1, 3, 4]
     assert post == pre[::-1]
     assert ccs == [pre]
+    assert contains_cycle
     # now start from 3
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=3, neighbor_order=Order.SORTED
     )
     assert parents == {3: None, 1: 3, 0: 1, 2: 0, 4: 2}
@@ -355,11 +381,12 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [3, 1, 0, 2, 4]
     assert post == pre[::-1]
     assert ccs == [pre]
+    assert contains_cycle
 
     # cycles
     g = GraphFactory.create_circuit(4)
     # start at 0, neighbors in sorted order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, **{i: i - 1 for i in range(1, 4)}}
@@ -367,8 +394,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 2, 3]
     assert post == pre[::-1]
     assert ccs == [pre]
+    assert contains_cycle
     # start at 1, neighbors in sorted order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=1, neighbor_order=Order.SORTED
     )
     assert parents == {1: None, 0: 1, 3: 0, 2: 3}
@@ -376,8 +404,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [1, 0, 3, 2]
     assert post == pre[::-1]
     assert ccs == [pre]
+    assert contains_cycle
     # start at 3, neighbors in sorted order
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=3, neighbor_order=Order.SORTED
     )
     assert parents == {3: None, 0: 3, 1: 0, 2: 1}
@@ -385,6 +414,7 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [3, 0, 1, 2]
     assert post == pre[::-1]
     assert ccs == [pre]
+    assert contains_cycle
 
     ### custom cylic graphs
     # two uneven cycles with 0 at center. I.e., a lopsided figure-8
@@ -404,7 +434,7 @@ def test_dfs(recursive: bool) -> None:
         ),
     )
     # neighbors in order, so shorter cycle first
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {0: None, 1: 0, 2: 1, 3: 2, 4: 0, 5: 4, 6: 5, 7: 6, 8: 7}
@@ -412,8 +442,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 2, 3, 4, 5, 6, 7, 8]
     assert post == [3, 2, 1, 8, 7, 6, 5, 4, 0]
     assert ccs == [pre]
+    assert contains_cycle
     # neighbors in reverse order, so larger cycle first, and in the opposite direction
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=Order.SORTED,
@@ -424,8 +455,9 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 8, 7, 6, 5, 4, 3, 2, 1]
     assert post == [4, 5, 6, 7, 8, 1, 2, 3, 0]
     assert ccs == [pre]
+    assert contains_cycle
     # now start at 8
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=8,
@@ -436,11 +468,12 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [8, 7, 6, 5, 4, 0, 3, 2, 1]
     assert post == [1, 2, 3, 0, 4, 5, 6, 7, 8]
     assert ccs == [pre]
+    assert contains_cycle
 
     # add node 9, add 0-9 edge, start at 9
     g.add_node(9)
     g.add_edge((0, 9))
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=Order.REVERSE_SORTED,
@@ -451,6 +484,7 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [9, 0, 1, 2, 3, 4, 5, 6, 7, 8]
     assert post == [3, 2, 1, 8, 7, 6, 5, 4, 0, 9]
     assert ccs == [pre]
+    assert contains_cycle
 
     # graph with a main line with cycles coming off of it
     # we already have the current example, we can just add to that
@@ -478,7 +512,7 @@ def test_dfs(recursive: bool) -> None:
             (20, 14),
         )
     )
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=9,
@@ -577,6 +611,7 @@ def test_dfs(recursive: bool) -> None:
         9,
     ]
     assert ccs == [pre]
+    assert contains_cycle
 
     # "nested" cycles
     # 0-1-2-3-4-5-6-7-0
@@ -603,7 +638,7 @@ def test_dfs(recursive: bool) -> None:
             (13, 10),
         ),
     )
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g, recursive=recursive, seed_order=Order.SORTED, neighbor_order=Order.SORTED
     )
     assert parents == {
@@ -621,7 +656,8 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     assert post == [7, 6, 5, 4, 3, 13, 12, 11, 10, 9, 8, 2, 1, 0]
     assert ccs == [pre]
-    parents, dists, pre, post, ccs = dfs(
+    assert contains_cycle
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g,
         recursive=recursive,
         seed_order=Order.SORTED,
@@ -662,6 +698,7 @@ def test_dfs(recursive: bool) -> None:
     assert pre == [0, 7, 6, 5, 4, 3, 2, 10, 13, 12, 11, 9, 8, 1]
     assert post == [11, 12, 13, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 0]
     assert ccs == [pre]
+    assert contains_cycle
 
     # test disjoint graphs (disconnected components)
     g_spindly = GraphFactory.create_spindly_tree(3)
@@ -759,7 +796,7 @@ def test_dfs(recursive: bool) -> None:
         exp_pre.extend([offset + node for node in pre])
         exp_post.extend([offset + node for node in post])
         exp_ccs.append([offset + node for node in pre])
-    parents, dists, pre, post, ccs = dfs(
+    parents, dists, pre, post, ccs, contains_cycle = dfs(
         g_combined,
         recursive=recursive,
         seed_order=Order.SORTED,
@@ -770,3 +807,4 @@ def test_dfs(recursive: bool) -> None:
     assert pre == exp_pre
     assert post == exp_post
     assert ccs == exp_ccs
+    assert contains_cycle
