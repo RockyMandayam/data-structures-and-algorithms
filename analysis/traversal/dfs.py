@@ -75,7 +75,6 @@ def dfs(
             preorder.extend(preorder_from_u)
             postorder.extend(postorder_from_u)
             ccs.append(preorder_from_u)  # could use postorder or keys of parents also
-    # TODO test dists
     return parents, dists, preorder, postorder, ccs
 
 
