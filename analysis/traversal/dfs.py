@@ -22,6 +22,7 @@ def dfs(
     list[Hashable],
     list[Hashable],
     list[list[Hashable]],
+    bool,
 ]:
     """Depth first search (DFS) implementation.
 
@@ -46,6 +47,7 @@ def dfs(
         list[Hashable]: postorder corresponding to the same traversal
         list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes, with the same order
             as the preorder of the DFS traversal.
+        bool: True if graph contains cycle; False otherwise
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
@@ -55,6 +57,7 @@ def dfs(
     preorder = []
     postorder = []
     ccs = []
+    contains_cycle = False
     for u in seed_nodes:
         if u not in reached:
             # won't do the same for reached_from_u. Why? Well, for directed graphs, there are times when a node
@@ -63,7 +66,13 @@ def dfs(
             # since every "seen" node will be "reached" at the end of a _dfs_from call, we can just use the other
             # returned values to determine which nodes were visited in a given call to _dfs_from (preorder_from_u,
             # postorder_from_u, or keys of parents_from_u).
-            parents_from_u, dists_from_u, preorder_from_u, postorder_from_u = dfs_from(
+            (
+                parents_from_u,
+                dists_from_u,
+                preorder_from_u,
+                postorder_from_u,
+                contains_cycle_from_u,
+            ) = dfs_from(
                 g,
                 u,
                 neighbor_order,
@@ -75,7 +84,8 @@ def dfs(
             preorder.extend(preorder_from_u)
             postorder.extend(postorder_from_u)
             ccs.append(preorder_from_u)  # could use postorder or keys of parents also
-    return parents, dists, preorder, postorder, ccs
+            contains_cycle = contains_cycle or contains_cycle_from_u
+    return parents, dists, preorder, postorder, ccs, contains_cycle
 
 
 # TODO test this separately
@@ -90,6 +100,7 @@ def dfs_from(
     dict[Hashable, float],
     list[Hashable],
     dict[Hashable, Hashable],
+    bool,
 ]:
     _dfs_from: Callable = _dfs_from_recursive if recursive else _dfs_from_iterative
     if reached is None:
@@ -110,6 +121,7 @@ def _dfs_from_recursive(
     dict[Hashable, float],
     list[Hashable],
     dict[Hashable, Hashable],
+    bool,
 ]:
     """Recursive exploration
 
@@ -135,6 +147,7 @@ def _dfs_from_recursive(
     reached.add(u)
     preorder = [u]
     postorder = []
+    contains_cycle = False
     for v in get_ordered_neighbors(g, u, neighbor_order):
         if v not in reached:
             (
@@ -142,6 +155,7 @@ def _dfs_from_recursive(
                 dists_from_v,
                 preorder_from_v,
                 postorder_from_v,
+                contains_cycle_from_v,
             ) = _dfs_from_recursive(
                 g,
                 v,
@@ -153,8 +167,15 @@ def _dfs_from_recursive(
             parents.update(parents_from_v)
             preorder.extend(preorder_from_v)
             postorder.extend(postorder_from_v)
+            contains_cycle = contains_cycle or contains_cycle_from_v
+        else:
+            # intuitively, we'd want to check if the neighbor is in parents, not in reached
+            # but since recursive DFS is "greedy" and literally recurses depth first, it'll
+            # always keep recursing, so the cycle-causing node (initial/final node) would
+            # actually be in reached as well.
+            contains_cycle = contains_cycle or (v != parents[u])
     postorder.append(u)
-    return parents, dists, preorder, postorder
+    return parents, dists, preorder, postorder, contains_cycle
 
 
 def _dfs_from_iterative(
@@ -167,6 +188,7 @@ def _dfs_from_iterative(
     dict[Hashable, float],
     list[Hashable],
     dict[Hashable, Hashable],
+    bool,
 ]:
     """Iterative implementation of DFS node exploration.
 
@@ -265,11 +287,12 @@ def _dfs_from_iterative(
     double_reached = set()
     preorder = []
     postorder = []
+    contains_cycle = False
     while to_explore:
         u = to_explore.pop(-1)
         if u in reached:
-            # this if block is only used for postorder
             if u not in double_reached:
+                # this if block is only used for postorder
                 double_reached.add(u)
                 postorder.append(u)
             continue
@@ -285,4 +308,6 @@ def _dfs_from_iterative(
                 parents[v] = u
                 dists[v] = dists[u] + 1
                 to_explore.append(v)
-    return parents, dists, preorder, postorder
+            else:
+                contains_cycle = contains_cycle or v != parents[u]
+    return parents, dists, preorder, postorder, contains_cycle

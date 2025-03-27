@@ -22,39 +22,43 @@ def test_bfs(use_approach_1: bool) -> None:
 
     # empty graph
     g = Graph()
-    parents, dists, level, ccs = bfs(g, use_approach_1=use_approach_1)
+    parents, dists, level, ccs, contains_cycle = bfs(g, use_approach_1=use_approach_1)
     assert parents == {}
     assert dists == {}
     assert level == []
     assert ccs == []
+    assert not contains_cycle
 
     # singleton graph
     g = Graph(nodes=1)
-    parents, dists, level, ccs = bfs(g, use_approach_1=use_approach_1)
+    parents, dists, level, ccs, contains_cycle = bfs(g, use_approach_1=use_approach_1)
     assert parents == {0: None}
     assert dists == {0: 0}
     assert level == [0]
     assert ccs == [[0]]
+    assert not contains_cycle
 
     # generally: n nodes, 0 edges
     for n in (2, 3, random.randint(4, MAX_TEST_GRAPH_SIZE)):
         g = Graph(nodes=n)
         # seeds in sorted order
-        parents, dists, level, ccs = bfs(
+        parents, dists, level, ccs, contains_cycle = bfs(
             g, use_approach_1=use_approach_1, seed_order=Order.SORTED
         )
         assert parents == {u: None for u in range(n)}
         assert dists == {u: 0 for u in range(n)}
         assert level == list(range(n)), n
         assert ccs == [[i] for i in range(n)]
+        assert not contains_cycle
         # seeds in reverse sorted order
-        parents, dists, level, ccs = bfs(
+        parents, dists, level, ccs, contains_cycle = bfs(
             g, use_approach_1=use_approach_1, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {u: None for u in range(n)}
         assert dists == {u: 0 for u in range(n)}
         assert level == list(range(n - 1, -1, -1)), n
         assert ccs == [[i] for i in range(n - 1, -1, -1)]
+        assert not contains_cycle
 
     ### spindly trees
 
@@ -62,28 +66,30 @@ def test_bfs(use_approach_1: bool) -> None:
     for n in (2, 3, random.randint(4, MAX_TEST_GRAPH_SIZE)):
         g = GraphFactory.create_spindly_tree(n)
         # in sorted order
-        parents, dists, level, ccs = bfs(
+        parents, dists, level, ccs, contains_cycle = bfs(
             g, use_approach_1=use_approach_1, seed_order=Order.SORTED
         )
         assert parents == {0: None, **{u: u - 1 for u in range(1, n)}}
         assert dists == {u: u for u in range(0, n)}
         assert level == list(range(n)), n
         assert ccs == [level]
+        assert not contains_cycle
         # in reverse sorted order
-        parents, dists, level, ccs = bfs(
+        parents, dists, level, ccs, contains_cycle = bfs(
             g, use_approach_1=use_approach_1, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {n - 1: None, **{u: u + 1 for u in range(n - 1)}}
         assert dists == {u: n - 1 - u for u in range(n)}
         assert level == list(range(n - 1, -1, -1)), n
         assert ccs == [level]
+        assert not contains_cycle
         # branch from the middle
         bfs_root = random.randint(1, n - 1)
         to_left = list(range(bfs_root - 1, -1, -1))  # from middle to the left
         to_right = list(range(bfs_root + 1, n))  # from middle to the right
         # important that bfs_root is first; everything else is irrelevant
         # explore left then right
-        parents, dists, level, ccs = bfs(
+        parents, dists, level, ccs, contains_cycle = bfs(
             g,
             use_approach_1=use_approach_1,
             seed_order=bfs_root,
@@ -110,8 +116,9 @@ def test_bfs(use_approach_1: bool) -> None:
                 exp_level.append(right)
         assert level == exp_level
         assert ccs == [level]
+        assert not contains_cycle
         # explore right then left
-        parents, dists, level, ccs = bfs(
+        parents, dists, level, ccs, contains_cycle = bfs(
             g,
             use_approach_1=use_approach_1,
             seed_order=bfs_root,
@@ -128,13 +135,14 @@ def test_bfs(use_approach_1: bool) -> None:
                 exp_level.append(left)
         assert level == exp_level
         assert ccs == [level]
+        assert not contains_cycle
 
     ### binary trees
 
     # simple binary tree (see create_b_ary_tree docstring for example)
     g = GraphFactory.create_b_ary_tree(2, 2)
     # starting from 0, neighbors in sorted order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -146,8 +154,9 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == [0, 1, 2, 3, 4, 5, 6]
     assert ccs == [level]
+    assert not contains_cycle
     # starting from 0, neighbors in reverse order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -157,8 +166,9 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == [0, 2, 1, 6, 5, 4, 3]
     assert ccs == [level]
+    assert not contains_cycle
     # starting from 6, neighbors in sorted order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.REVERSE_SORTED,
@@ -170,8 +180,9 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == [6, 2, 0, 5, 1, 3, 4]
     assert ccs == [level]
+    assert not contains_cycle
     # starting from 6, neighbors in reverse order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.REVERSE_SORTED,
@@ -181,8 +192,9 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == [6, 2, 5, 0, 1, 4, 3]
     assert ccs == [level]
+    assert not contains_cycle
     # starting from 1
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=1,
@@ -194,8 +206,9 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == [1, 0, 3, 4, 2, 5, 6]
     assert ccs == [level]
+    assert not contains_cycle
     # now neighbors in reverse order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=1,
@@ -205,12 +218,13 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == [1, 4, 3, 0, 2, 6, 5]
     assert ccs == [level]
+    assert not contains_cycle
 
     ### nearly spindly trees
 
     # See 8 node binary example in create_nearly_spindly_b_ary_tree docstring
     g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 8)
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -220,8 +234,9 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4}
     assert level == list(range(8))
     assert ccs == [level]
+    assert not contains_cycle
     # start from node 3 (arbitrarily chosen), neighbors in sorted order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=3,
@@ -233,8 +248,9 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == [3, 1, 5, 6, 0, 4, 7, 2]
     assert ccs == [level]
+    assert not contains_cycle
     # now with neighbors in reverse order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=3,
@@ -244,10 +260,11 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == [3, 6, 5, 1, 7, 4, 0, 2]
     assert ccs == [level]
+    assert not contains_cycle
 
     # Same with 9 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(2, 9)
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -257,8 +274,9 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4}
     assert level == list(range(9))
     assert ccs == [level]
+    assert not contains_cycle
     # start from node 8, neighbors in sorted order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=8,
@@ -268,10 +286,11 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {8: 0, 5: 1, 7: 2, 3: 2, 6: 3, 1: 3, 4: 4, 0: 4, 2: 5}
     assert level == [8, 5, 3, 7, 1, 6, 0, 4, 2]
     assert ccs == [level]
+    assert not contains_cycle
 
     # See 10 node 3-ary example in create_nearly_spindly_b_ary_tree docstring
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 10)
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -283,10 +302,11 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == list(range(10))
     assert ccs == [level]
+    assert not contains_cycle
 
     # Same with 11 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 11)
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -298,10 +318,11 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == list(range(11))
     assert ccs == [level]
+    assert not contains_cycle
 
     # Same with 12 nodes
     g = GraphFactory.create_nearly_spindly_b_ary_tree(3, 12)
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -313,13 +334,14 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == list(range(12))
     assert ccs == [level]
+    assert not contains_cycle
 
     ### arbitrary custom tree
     g = Graph(
         nodes=range(10),
         edges=((0, 1), (1, 2), (2, 3), (3, 4), (0, 5), (5, 6), (6, 7), (0, 8), (8, 9)),
     )
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -329,11 +351,12 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {0: 0, 1: 1, 5: 1, 8: 1, 2: 2, 3: 3, 4: 4, 6: 2, 7: 3, 9: 2}
     assert level == [0, 1, 5, 8, 2, 6, 9, 3, 7, 4]
     assert ccs == [level]
+    assert not contains_cycle
 
     # complete graphs (fully connected, so node 0 should just recurse fully in one pass)
     k = random.randint(4, 10)
     g = GraphFactory.create_complete_graph(k)
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -343,10 +366,11 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {0: 0, **{i: 1 for i in range(1, k)}}
     assert level == list(range(k))
     assert ccs == [level]
+    assert contains_cycle
 
     # look ahead graph (see example in create_look_ahead_graph docstring)
     g = GraphFactory.create_look_ahead_graph(5, 2)
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -356,27 +380,30 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {0: 0, 1: 1, 2: 1, 3: 2, 4: 2}
     assert level == [0, 1, 2, 3, 4]
     assert ccs == [level]
+    assert contains_cycle
     # now start from 2
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g, use_approach_1=use_approach_1, seed_order=2, neighbor_order=Order.SORTED
     )
     assert parents == {2: None, 0: 2, 1: 2, 3: 2, 4: 2}
     assert dists == {2: 0, 0: 1, 1: 1, 3: 1, 4: 1}
     assert level == [2, 0, 1, 3, 4]
     assert ccs == [level]
+    assert contains_cycle
     # now start from 3
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g, use_approach_1=use_approach_1, seed_order=3, neighbor_order=Order.SORTED
     )
     assert parents == {3: None, 1: 3, 2: 3, 4: 3, 0: 1}
     assert dists == {3: 0, 1: 1, 2: 1, 4: 1, 0: 2}
     assert level == [3, 1, 2, 4, 0]
     assert ccs == [level]
+    assert contains_cycle
 
     # cycles
     g = GraphFactory.create_circuit(4)
     # start at 0, neighbors in sorted order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -386,22 +413,25 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {0: 0, 1: 1, 3: 1, 2: 2}
     assert level == [0, 1, 3, 2]
     assert ccs == [level]
+    assert contains_cycle
     # start at 1, neighbors in sorted order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g, use_approach_1=use_approach_1, seed_order=1, neighbor_order=Order.SORTED
     )
     assert parents == {1: None, 0: 1, 2: 1, 3: 0}
     assert dists == {1: 0, 0: 1, 2: 1, 3: 2}
     assert level == [1, 0, 2, 3]
     assert ccs == [level]
+    assert contains_cycle
     # start at 3, neighbors in sorted order
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g, use_approach_1=use_approach_1, seed_order=3, neighbor_order=Order.SORTED
     )
     assert parents == {3: None, 0: 3, 2: 3, 1: 0}
     assert dists == {3: 0, 0: 1, 2: 1, 1: 2}
     assert level == [3, 0, 2, 1]
     assert ccs == [level]
+    assert contains_cycle
 
     ### custom cylic graphs
     # two uneven cycles with 0 at center. I.e., a lopsided figure-8
@@ -421,7 +451,7 @@ def test_bfs(use_approach_1: bool) -> None:
         ),
     )
     # neighbors in order, so shorter cycle first
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -431,8 +461,9 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {0: 0, 1: 1, 3: 1, 4: 1, 8: 1, 2: 2, 5: 2, 7: 2, 6: 3}
     assert level == [0, 1, 3, 4, 8, 2, 5, 7, 6]
     assert ccs == [level]
+    assert contains_cycle
     # neighbors in reverse order, so larger cycle first, and in the opposite direction
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -442,8 +473,9 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {0: 0, 8: 1, 4: 1, 3: 1, 1: 1, 7: 2, 5: 2, 2: 2, 6: 3}
     assert level == [0, 8, 4, 3, 1, 7, 5, 2, 6]
     assert ccs == [level]
+    assert contains_cycle
     # now start at 8
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=8,
@@ -453,11 +485,12 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {8: 0, 7: 1, 0: 1, 6: 2, 4: 2, 3: 2, 1: 2, 5: 3, 2: 3}
     assert level == [8, 7, 0, 6, 4, 3, 1, 5, 2]
     assert ccs == [level]
+    assert contains_cycle
 
     # add node 9, add 0-9 edge, start at 9
     g.add_node(9)
     g.add_edge((0, 9))
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.REVERSE_SORTED,
@@ -467,6 +500,7 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == {9: 0, 0: 1, 1: 2, 3: 2, 4: 2, 8: 2, 2: 3, 5: 3, 7: 3, 6: 4}
     assert level == [9, 0, 1, 3, 4, 8, 2, 5, 7, 6]
     assert ccs == [level]
+    assert contains_cycle
 
     # graph with a main line with cycles coming off of it
     # we already have the current example, we can just add to that
@@ -494,7 +528,7 @@ def test_bfs(use_approach_1: bool) -> None:
             (20, 14),
         )
     )
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=9,
@@ -570,6 +604,7 @@ def test_bfs(use_approach_1: bool) -> None:
         18,
     ]
     assert ccs == [level]
+    assert contains_cycle
 
     # "nested" cycles
     # 0-1-2-3-4-5-6-7-0
@@ -596,7 +631,7 @@ def test_bfs(use_approach_1: bool) -> None:
             (13, 10),
         ),
     )
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -638,7 +673,8 @@ def test_bfs(use_approach_1: bool) -> None:
     }
     assert level == [0, 1, 7, 2, 6, 3, 8, 10, 5, 4, 9, 11, 13, 12]
     assert ccs == [level]
-    parents, dists, level, ccs = bfs(
+    assert contains_cycle
+    parents, dists, level, ccs, contains_cycle = bfs(
         g,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -678,6 +714,7 @@ def test_bfs(use_approach_1: bool) -> None:
     }
     assert level == [0, 7, 1, 6, 2, 5, 10, 8, 3, 4, 13, 11, 9, 12]
     assert ccs == [level]
+    assert contains_cycle
 
     # test disjoint graphs (disconnected components)
     g_spindly = GraphFactory.create_spindly_tree(3)
@@ -785,7 +822,7 @@ def test_bfs(use_approach_1: bool) -> None:
         exp_dists.update({offset + node: dist for node, dist in dists.items()})
         exp_level.extend([offset + node for node in level])
         exp_ccs.append([offset + node for node in level])
-    parents, dists, level, ccs = bfs(
+    parents, dists, level, ccs, contains_cycle = bfs(
         g_combined,
         use_approach_1=use_approach_1,
         seed_order=Order.SORTED,
@@ -795,3 +832,4 @@ def test_bfs(use_approach_1: bool) -> None:
     assert dists == exp_dists
     assert level == exp_level
     assert ccs == exp_ccs
+    assert contains_cycle
