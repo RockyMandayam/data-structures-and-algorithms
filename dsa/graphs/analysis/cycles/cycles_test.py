@@ -6,7 +6,7 @@ from dsa.graphs.graph import Graph
 from dsa.graphs.graph_factory import GraphFactory
 
 
-@pytest.mark.parametrize("traversal_type", (TraversalType.DFS, TraversalType.BFS))
+@pytest.mark.parametrize("traversal_type", (TraversalType.DFS, TraversalType.BFS, None))
 def test_contains_cycle(traversal_type: TraversalType) -> None:
     g_complete = GraphFactory.create_complete_graph(4)
     assert contains_cycle(g_complete, traversal_type=traversal_type)
