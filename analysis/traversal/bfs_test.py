@@ -24,6 +24,7 @@ def test_bfs(use_approach_1: bool) -> None:
     g = Graph()
     parents, dists, level, ccs = bfs(g, use_approach_1=use_approach_1)
     assert parents == {}
+    assert dists == {}
     assert level == []
     assert ccs == []
 
@@ -31,6 +32,7 @@ def test_bfs(use_approach_1: bool) -> None:
     g = Graph(nodes=1)
     parents, dists, level, ccs = bfs(g, use_approach_1=use_approach_1)
     assert parents == {0: None}
+    assert dists == {0: 0}
     assert level == [0]
     assert ccs == [[0]]
 
@@ -42,6 +44,7 @@ def test_bfs(use_approach_1: bool) -> None:
             g, use_approach_1=use_approach_1, seed_order=Order.SORTED
         )
         assert parents == {u: None for u in range(n)}
+        assert dists == {u: 0 for u in range(n)}
         assert level == list(range(n)), n
         assert ccs == [[i] for i in range(n)]
         # seeds in reverse sorted order
@@ -49,6 +52,7 @@ def test_bfs(use_approach_1: bool) -> None:
             g, use_approach_1=use_approach_1, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {u: None for u in range(n)}
+        assert dists == {u: 0 for u in range(n)}
         assert level == list(range(n - 1, -1, -1)), n
         assert ccs == [[i] for i in range(n - 1, -1, -1)]
 
@@ -62,6 +66,7 @@ def test_bfs(use_approach_1: bool) -> None:
             g, use_approach_1=use_approach_1, seed_order=Order.SORTED
         )
         assert parents == {0: None, **{u: u - 1 for u in range(1, n)}}
+        assert dists == {u: u for u in range(0, n)}
         assert level == list(range(n)), n
         assert ccs == [level]
         # in reverse sorted order
@@ -69,6 +74,7 @@ def test_bfs(use_approach_1: bool) -> None:
             g, use_approach_1=use_approach_1, seed_order=Order.REVERSE_SORTED
         )
         assert parents == {n - 1: None, **{u: u + 1 for u in range(n - 1)}}
+        assert dists == {u: n - 1 - u for u in range(n)}
         assert level == list(range(n - 1, -1, -1)), n
         assert ccs == [level]
         # branch from the middle
@@ -88,7 +94,13 @@ def test_bfs(use_approach_1: bool) -> None:
             **{u: u + 1 for u in range(bfs_root)},
             **{u: u - 1 for u in range(bfs_root + 1, n)},
         }
+        exp_dists = {
+            bfs_root: 0,
+            **{u: bfs_root - u for u in range(bfs_root)},
+            **{u: u - bfs_root for u in range(bfs_root + 1, n)},
+        }
         assert parents == exp_parents
+        assert dists == exp_dists
         exp_level = [bfs_root]
         for dist in range(1, len(g)):
             left, right = bfs_root - dist, bfs_root + dist
@@ -106,6 +118,7 @@ def test_bfs(use_approach_1: bool) -> None:
             neighbor_order=Order.REVERSE_SORTED,
         )
         assert parents == exp_parents
+        assert dists == exp_dists
         exp_level = [bfs_root]
         for dist in range(1, len(g)):
             left, right = bfs_root - dist, bfs_root + dist
@@ -129,6 +142,8 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     exp_parents = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
     assert parents == exp_parents
+    exp_dists = {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 2, 6: 2}
+    assert dists == exp_dists
     assert level == [0, 1, 2, 3, 4, 5, 6]
     assert ccs == [level]
     # starting from 0, neighbors in reverse order
@@ -139,6 +154,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == exp_parents
+    assert dists == exp_dists
     assert level == [0, 2, 1, 6, 5, 4, 3]
     assert ccs == [level]
     # starting from 6, neighbors in sorted order
@@ -149,7 +165,9 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     exp_parents = {6: None, 2: 6, 5: 2, 0: 2, 1: 0, 3: 1, 4: 1}
+    exp_dists = {6: 0, 2: 1, 5: 2, 0: 2, 1: 3, 3: 4, 4: 4}
     assert parents == exp_parents
+    assert dists == exp_dists
     assert level == [6, 2, 0, 5, 1, 3, 4]
     assert ccs == [level]
     # starting from 6, neighbors in reverse order
@@ -160,6 +178,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == exp_parents
+    assert dists == exp_dists
     assert level == [6, 2, 5, 0, 1, 4, 3]
     assert ccs == [level]
     # starting from 1
@@ -170,7 +189,9 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     exp_parents = {1: None, 3: 1, 4: 1, 0: 1, 2: 0, 5: 2, 6: 2}
+    exp_dists = {1: 0, 3: 1, 4: 1, 0: 1, 2: 2, 5: 3, 6: 3}
     assert parents == exp_parents
+    assert dists == exp_dists
     assert level == [1, 0, 3, 4, 2, 5, 6]
     assert ccs == [level]
     # now neighbors in reverse order
@@ -181,6 +202,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == exp_parents
+    assert dists == exp_dists
     assert level == [1, 4, 3, 0, 2, 6, 5]
     assert ccs == [level]
 
@@ -195,6 +217,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5}
+    assert dists == {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4}
     assert level == list(range(8))
     assert ccs == [level]
     # start from node 3 (arbitrarily chosen), neighbors in sorted order
@@ -205,7 +228,9 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     exp_parents = {3: None, 5: 3, 6: 3, 1: 3, 7: 5, 4: 1, 0: 1, 2: 0}
+    exp_dists = {3: 0, 5: 1, 6: 1, 1: 1, 7: 2, 4: 2, 0: 2, 2: 3}
     assert parents == exp_parents
+    assert dists == exp_dists
     assert level == [3, 1, 5, 6, 0, 4, 7, 2]
     assert ccs == [level]
     # now with neighbors in reverse order
@@ -216,6 +241,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == exp_parents
+    assert dists == exp_dists
     assert level == [3, 6, 5, 1, 7, 4, 0, 2]
     assert ccs == [level]
 
@@ -228,6 +254,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 3, 6: 3, 7: 5, 8: 5}
+    assert dists == {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4}
     assert level == list(range(9))
     assert ccs == [level]
     # start from node 8, neighbors in sorted order
@@ -238,6 +265,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {8: None, 5: 8, 7: 5, 3: 5, 6: 3, 1: 3, 4: 1, 0: 1, 2: 0}
+    assert dists == {8: 0, 5: 1, 7: 2, 3: 2, 6: 3, 1: 3, 4: 4, 0: 4, 2: 5}
     assert level == [8, 5, 3, 7, 1, 6, 0, 4, 2]
     assert ccs == [level]
 
@@ -250,7 +278,9 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     exp_parents = {0: None, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 4, 8: 4, 9: 4}
+    exp_dists = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 2, 6: 2, 7: 3, 8: 3, 9: 3}
     assert parents == exp_parents
+    assert dists == exp_dists
     assert level == list(range(10))
     assert ccs == [level]
 
@@ -264,6 +294,8 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     exp_parents[10] = 7
     assert parents == exp_parents
+    exp_dists[10] = 4
+    assert dists == exp_dists
     assert level == list(range(11))
     assert ccs == [level]
 
@@ -277,6 +309,8 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     exp_parents[11] = 7
     assert parents == exp_parents
+    exp_dists[11] = 4
+    assert dists == exp_dists
     assert level == list(range(12))
     assert ccs == [level]
 
@@ -292,6 +326,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {0: None, 1: 0, 5: 0, 8: 0, 2: 1, 3: 2, 4: 3, 6: 5, 7: 6, 9: 8}
+    assert dists == {0: 0, 1: 1, 5: 1, 8: 1, 2: 2, 3: 3, 4: 4, 6: 2, 7: 3, 9: 2}
     assert level == [0, 1, 5, 8, 2, 6, 9, 3, 7, 4]
     assert ccs == [level]
 
@@ -305,6 +340,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {0: None, **{i: 0 for i in range(1, k)}}
+    assert dists == {0: 0, **{i: 1 for i in range(1, k)}}
     assert level == list(range(k))
     assert ccs == [level]
 
@@ -317,6 +353,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {0: None, 1: 0, 2: 0, 3: 1, 4: 2}
+    assert dists == {0: 0, 1: 1, 2: 1, 3: 2, 4: 2}
     assert level == [0, 1, 2, 3, 4]
     assert ccs == [level]
     # now start from 2
@@ -324,6 +361,7 @@ def test_bfs(use_approach_1: bool) -> None:
         g, use_approach_1=use_approach_1, seed_order=2, neighbor_order=Order.SORTED
     )
     assert parents == {2: None, 0: 2, 1: 2, 3: 2, 4: 2}
+    assert dists == {2: 0, 0: 1, 1: 1, 3: 1, 4: 1}
     assert level == [2, 0, 1, 3, 4]
     assert ccs == [level]
     # now start from 3
@@ -331,6 +369,7 @@ def test_bfs(use_approach_1: bool) -> None:
         g, use_approach_1=use_approach_1, seed_order=3, neighbor_order=Order.SORTED
     )
     assert parents == {3: None, 1: 3, 2: 3, 4: 3, 0: 1}
+    assert dists == {3: 0, 1: 1, 2: 1, 4: 1, 0: 2}
     assert level == [3, 1, 2, 4, 0]
     assert ccs == [level]
 
@@ -344,6 +383,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {0: None, 1: 0, 3: 0, 2: 1}
+    assert dists == {0: 0, 1: 1, 3: 1, 2: 2}
     assert level == [0, 1, 3, 2]
     assert ccs == [level]
     # start at 1, neighbors in sorted order
@@ -351,6 +391,7 @@ def test_bfs(use_approach_1: bool) -> None:
         g, use_approach_1=use_approach_1, seed_order=1, neighbor_order=Order.SORTED
     )
     assert parents == {1: None, 0: 1, 2: 1, 3: 0}
+    assert dists == {1: 0, 0: 1, 2: 1, 3: 2}
     assert level == [1, 0, 2, 3]
     assert ccs == [level]
     # start at 3, neighbors in sorted order
@@ -358,6 +399,7 @@ def test_bfs(use_approach_1: bool) -> None:
         g, use_approach_1=use_approach_1, seed_order=3, neighbor_order=Order.SORTED
     )
     assert parents == {3: None, 0: 3, 2: 3, 1: 0}
+    assert dists == {3: 0, 0: 1, 2: 1, 1: 2}
     assert level == [3, 0, 2, 1]
     assert ccs == [level]
 
@@ -386,6 +428,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {0: None, 1: 0, 3: 0, 4: 0, 8: 0, 2: 1, 5: 4, 7: 8, 6: 5}
+    assert dists == {0: 0, 1: 1, 3: 1, 4: 1, 8: 1, 2: 2, 5: 2, 7: 2, 6: 3}
     assert level == [0, 1, 3, 4, 8, 2, 5, 7, 6]
     assert ccs == [level]
     # neighbors in reverse order, so larger cycle first, and in the opposite direction
@@ -396,6 +439,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == {0: None, 8: 0, 4: 0, 3: 0, 1: 0, 7: 8, 5: 4, 2: 3, 6: 7}
+    assert dists == {0: 0, 8: 1, 4: 1, 3: 1, 1: 1, 7: 2, 5: 2, 2: 2, 6: 3}
     assert level == [0, 8, 4, 3, 1, 7, 5, 2, 6]
     assert ccs == [level]
     # now start at 8
@@ -406,6 +450,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.REVERSE_SORTED,
     )
     assert parents == {8: None, 7: 8, 0: 8, 6: 7, 4: 0, 3: 0, 1: 0, 5: 6, 2: 3}
+    assert dists == {8: 0, 7: 1, 0: 1, 6: 2, 4: 2, 3: 2, 1: 2, 5: 3, 2: 3}
     assert level == [8, 7, 0, 6, 4, 3, 1, 5, 2]
     assert ccs == [level]
 
@@ -419,6 +464,7 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == {9: None, 0: 9, 1: 0, 3: 0, 4: 0, 8: 0, 2: 1, 5: 4, 7: 8, 6: 5}
+    assert dists == {9: 0, 0: 1, 1: 2, 3: 2, 4: 2, 8: 2, 2: 3, 5: 3, 7: 3, 6: 4}
     assert level == [9, 0, 1, 3, 4, 8, 2, 5, 7, 6]
     assert ccs == [level]
 
@@ -476,6 +522,29 @@ def test_bfs(use_approach_1: bool) -> None:
         19: 20,
         17: 16,
         18: 19,
+    }
+    assert dists == {
+        9: 0,
+        0: 1,
+        1: 2,
+        3: 2,
+        4: 2,
+        8: 2,
+        10: 2,
+        2: 3,
+        5: 3,
+        7: 3,
+        11: 3,
+        6: 4,
+        12: 4,
+        13: 4,
+        14: 4,
+        15: 5,
+        20: 5,
+        16: 6,
+        19: 6,
+        17: 7,
+        18: 7,
     }
     assert level == [
         9,
@@ -548,7 +617,24 @@ def test_bfs(use_approach_1: bool) -> None:
         11: 10,
         13: 10,
         5: 6,
-        12: 11.0,
+        12: 11,
+    }
+    assert dists == {
+        0: 0,
+        1: 1,
+        7: 1,
+        2: 2,
+        6: 2,
+        3: 3,
+        8: 3,
+        10: 3,
+        5: 3,
+        4: 4,
+        9: 4,
+        11: 4,
+        13: 4,
+        5: 3,
+        12: 5,
     }
     assert level == [0, 1, 7, 2, 6, 3, 8, 10, 5, 4, 9, 11, 13, 12]
     assert ccs == [level]
@@ -574,15 +660,33 @@ def test_bfs(use_approach_1: bool) -> None:
         9: 10,
         12: 13,
     }
+    assert dists == {
+        0: 0,
+        7: 1,
+        1: 1,
+        6: 2,
+        2: 2,
+        5: 3,
+        10: 3,
+        8: 3,
+        3: 3,
+        4: 4,
+        13: 4,
+        11: 4,
+        9: 4,
+        12: 5,
+    }
     assert level == [0, 7, 1, 6, 2, 5, 10, 8, 3, 4, 13, 11, 9, 12]
     assert ccs == [level]
 
     # test disjoint graphs (disconnected components)
     g_spindly = GraphFactory.create_spindly_tree(3)
     exp_parents_spindly = {0: None, 1: 0, 2: 1}
+    exp_dists_spindly = {0: 0, 1: 1, 2: 2}
     exp_level_spindly = list(range(3))
     g_b_ary = GraphFactory.create_b_ary_tree(2, 2)
     exp_parents_b_ary = {0: None, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
+    exp_dists_b_ary = {0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 2, 6: 2}
     exp_level_b_ary = [0, 1, 2, 3, 4, 5, 6]
     # See 8 node binary example in create_nearly_spindly_b_ary_tree docstring
     g_nearly_spindly_b_ary = GraphFactory.create_nearly_spindly_b_ary_tree(2, 8)
@@ -595,6 +699,16 @@ def test_bfs(use_approach_1: bool) -> None:
         5: 3,
         6: 3,
         7: 5,
+    }
+    exp_dists_nearly_spindly_b_ary = {
+        0: 0,
+        1: 1,
+        2: 1,
+        3: 2,
+        4: 2,
+        5: 3,
+        6: 3,
+        7: 4,
     }
     exp_level_nearly_spindly_b_ary = list(range(8))
     g_custom = g  # above custom example
@@ -613,7 +727,24 @@ def test_bfs(use_approach_1: bool) -> None:
         11: 10,
         13: 10,
         5: 6,
-        12: 11.0,
+        12: 11,
+    }
+    exp_dists_custom = {
+        0: 0,
+        1: 1,
+        7: 1,
+        2: 2,
+        6: 2,
+        3: 3,
+        8: 3,
+        10: 3,
+        5: 3,
+        4: 4,
+        9: 4,
+        11: 4,
+        13: 4,
+        5: 3,
+        12: 5,
     }
     exp_level_custom = [0, 1, 7, 2, 6, 3, 8, 10, 5, 4, 9, 11, 13, 12]
     gs = (g_spindly, g_b_ary, g_nearly_spindly_b_ary, g_custom)
@@ -624,6 +755,12 @@ def test_bfs(use_approach_1: bool) -> None:
         exp_parents_nearly_spindly_b_ary,
         exp_parents_custom,
     )
+    exp_dists_seq = (
+        exp_dists_spindly,
+        exp_dists_b_ary,
+        exp_dists_nearly_spindly_b_ary,
+        exp_dists_custom,
+    )
     exp_levels = (
         exp_level_spindly,
         exp_level_b_ary,
@@ -632,9 +769,12 @@ def test_bfs(use_approach_1: bool) -> None:
     )
     lengths = [len(g) for g in gs]
     exp_parents = {}
+    exp_dists = {}
     exp_level = []
     exp_ccs = []
-    for i, (level, parents) in enumerate(zip(exp_levels, exp_parents_seq)):
+    for i, (level, parents, dists) in enumerate(
+        zip(exp_levels, exp_parents_seq, exp_dists_seq)
+    ):
         offset = sum(lengths[:i])
         exp_parents.update(
             {
@@ -642,6 +782,7 @@ def test_bfs(use_approach_1: bool) -> None:
                 for node, parent in parents.items()
             }
         )
+        exp_dists.update({offset + node: dist for node, dist in dists.items()})
         exp_level.extend([offset + node for node in level])
         exp_ccs.append([offset + node for node in level])
     parents, dists, level, ccs = bfs(
@@ -651,5 +792,6 @@ def test_bfs(use_approach_1: bool) -> None:
         neighbor_order=Order.SORTED,
     )
     assert parents == exp_parents
+    assert dists == exp_dists
     assert level == exp_level
     assert ccs == exp_ccs
