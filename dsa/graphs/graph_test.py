@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterable, Mapping
 
 import pytest
 
-from graphs.graph import Graph
+from dsa.graphs.graph import Graph
 
 
 class TestGraph:

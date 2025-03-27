@@ -1,10 +1,10 @@
 import pytest
 
-from graphs.analysis.connected_components.connected_components import (
+from dsa.graphs.analysis.connected_components.connected_components import (
     get_connected_components,
 )
-from graphs.analysis.traversal_type import TraversalType
-from graphs.graph_factory import GraphFactory
+from dsa.graphs.analysis.traversal_type import TraversalType
+from dsa.graphs.graph_factory import GraphFactory
 
 
 @pytest.mark.parametrize("traversal_type", (TraversalType.DFS, TraversalType.BFS))

@@ -1,12 +1,12 @@
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from typing import Any
 
-from graphs.analysis.traversal.order import Order
-from graphs.analysis.traversal.utils import (
+from dsa.graphs.analysis.traversal.order import Order
+from dsa.graphs.analysis.traversal.utils import (
     get_ordered_neighbors,
     get_ordered_seed_nodes,
 )
-from graphs.graph import Graph
+from dsa.graphs.graph import Graph
 
 
 # TODO: goal neighbor

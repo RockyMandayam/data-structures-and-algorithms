@@ -2,10 +2,10 @@ import random
 
 import pytest
 
-from graphs.analysis.traversal.dfs import dfs
-from graphs.analysis.traversal.order import Order
-from graphs.graph import Graph
-from graphs.graph_factory import GraphFactory
+from dsa.graphs.analysis.traversal.dfs import dfs
+from dsa.graphs.analysis.traversal.order import Order
+from dsa.graphs.graph import Graph
+from dsa.graphs.graph_factory import GraphFactory
 
 # TODO why is this so slow with 2**big_number
 MAX_TEST_GRAPH_SIZE = 2**8
