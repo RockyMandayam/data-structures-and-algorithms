@@ -335,3 +335,14 @@ class TestGraph:
         assert len(g[0]) == 0
         assert len(g[1]) == 1
         assert len(g[2]) == 2
+
+    def test_add_edges(self) -> None:
+        g = Graph(3)
+        assert len(g) == 3
+        assert g.num_edges() == 0
+
+        g.add_edges(((0, 1), (0, 2)))
+        assert len(g) == 3
+        assert g.num_edges() == 2
+        assert g.is_edge((1, 0))
+        assert g.is_edge((2, 0))
