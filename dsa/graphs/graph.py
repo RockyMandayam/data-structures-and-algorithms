@@ -1,3 +1,4 @@
+import math
 from collections.abc import Collection, Hashable, Iterable, Iterator, Mapping, Sequence
 from typing import Any
 
@@ -34,6 +35,7 @@ class Graph:
         nodes: Mapping[Hashable, Mapping] | Iterable[Hashable] | int | None = None,
         edges: Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]]
         | Mapping[tuple[Hashable, Hashable], Mapping]
+        | Mapping[tuple[Hashable, Hashable], float]
         | Sequence[tuple[tuple[Hashable, Hashable], float]]
         | Sequence[tuple[Hashable, Hashable]]
         | None = None,
@@ -83,6 +85,7 @@ class Graph:
         nodes: Mapping[Hashable, Mapping],
         edges: Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]]
         | Mapping[tuple[Hashable, Hashable], Mapping]
+        | Mapping[tuple[Hashable, Hashable], float]
         | Sequence[tuple[tuple[Hashable, Hashable], float]]
         | Sequence[tuple[Hashable, Hashable]]
         | None,
@@ -101,6 +104,17 @@ class Graph:
             and isinstance(edges[0][0], Hashable)
         ):
             edges = [(edge, Graph.DEFAULT_EDGE_WEIGHT) for edge in edges]
+        # handle Mapping[tuple[Hashable, Hashable], float]: convert to
+        # Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]] format
+        if (
+            isinstance(edges, Mapping)
+            and edges
+            and (
+                isinstance(next(iter(edges.values())), float)
+                or isinstance(next(iter(edges.values())), int)
+            )
+        ):
+            edges = {edge: (weight, {}) for edge, weight in edges.items()}
         # handle Mapping[tuple[Hashable, Hashable], Mapping]: convert to
         # Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]] format
         if (
@@ -222,6 +236,7 @@ class Graph:
     def get_weight(self, edge: tuple[Hashable, Hashable]) -> None:
         if not self.is_edge(edge):
             raise ValueError(f"Unknown edge {edge=}")
+        u, v = edge
         if (v, u) in self._edges:
             u, v = v, u
         return self._edges[(u, v)][0]
@@ -250,10 +265,22 @@ class Graph:
             raise ValueError(f"Unknown node {v=}")
         if self.is_edge(edge):
             raise ValueError(f"Edge ({u}, {v}) already exists.")
-        self._edges[edge] = attributes
+        self._edges[edge] = (Graph.DEFAULT_EDGE_WEIGHT, attributes)
         self._incident_edges[u].add(edge)
         self._incident_edges[v].add(edge)
 
     def add_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> None:
         for edge in edges:
             self.add_edge(edge)
+
+    def set_weight(self, edge: tuple[Hashable, Hashable], weight: float) -> None:
+        if not math.isfinite(weight):
+            raise ValueError(f"Invalid {weight=}")
+        if not self.is_edge(edge):
+            raise ValueError(f"Unknown edge {edge=}")
+        u, v = edge
+        if (v, u) in self._edges:
+            u, v = v, u
+        # can't update tuple, need to reassign
+        _, attrs = self._edges[(u, v)]
+        self._edges[(u, v)] = (weight, attrs)

@@ -1,6 +1,7 @@
 from dsa.disjoint_sets.disjoint_sets import DisjointSets
 from dsa.graphs.analysis.traversal.bfs import bfs
 from dsa.graphs.analysis.traversal.dfs import dfs
+from dsa.graphs.analysis.traversal.dijkstra import dijkstra
 from dsa.graphs.analysis.traversal_type import TraversalType
 from dsa.graphs.graph import Graph
 
@@ -26,6 +27,8 @@ def _contains_cycle_using_graph_traversal(
         *_, contains_cycle = dfs(g)
     elif traversal_type == TraversalType.BFS:
         *_, contains_cycle = bfs(g)
+    elif traversal_type == TraversalType.DIJKSTRA:
+        *_, contains_cycle = dijkstra(g)
     else:
         raise ValueError(f"Unrecognized {traversal_type=}.")
     return contains_cycle

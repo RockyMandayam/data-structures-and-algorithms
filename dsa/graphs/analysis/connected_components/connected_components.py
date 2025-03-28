@@ -2,6 +2,7 @@ from collections.abc import Hashable
 
 from dsa.graphs.analysis.traversal.bfs import bfs
 from dsa.graphs.analysis.traversal.dfs import dfs
+from dsa.graphs.analysis.traversal.dijkstra import dijkstra
 from dsa.graphs.analysis.traversal_type import TraversalType
 from dsa.graphs.graph import Graph
 
@@ -22,6 +23,8 @@ def get_connected_components(
         *_, ccs, _ = dfs(g)
     elif traversal_type == TraversalType.BFS:
         *_, ccs, _ = bfs(g)
+    elif traversal_type == TraversalType.DIJKSTRA:
+        *_, ccs, _ = dijkstra(g)
     else:
         raise ValueError(f"Unrecognized {traversal_type=}")
     return ccs
