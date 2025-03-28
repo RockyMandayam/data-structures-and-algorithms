@@ -1,3 +1,4 @@
+import heapq
 from collections.abc import Hashable, Sequence
 
 from dsa.graphs.analysis.traversal.order import Order
@@ -8,7 +9,7 @@ from dsa.graphs.analysis.traversal.utils import (
 from dsa.graphs.graph import Graph
 
 
-def bfs(
+def dijkstra(
     g: Graph,
     *,
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
@@ -21,15 +22,11 @@ def bfs(
     list[list[Hashable]],
     bool,
 ]:
-    """Breadth first search (BFS) implementation.
-
-    This is somewhat similar to DFS. It could potentially be implemented in the same function. But because of the different return
-    types (preorder and postorder vs levelorder), and the fact that the 'recursive' kwarg only makes sense (as of now)
-    for DFS, I chose to do it separately.
+    """Dijkstra's algorithm implementation. VERY similar to BFS.
 
     Args:
-        g: Graph on which to perform DFS
-        seed_order: Order in which to iterate through potential start nodes for DFS exploration.
+        g: Graph on which to perform Dijkstra's algorithm
+        seed_order: Order in which to iterate through potential start nodes for Dijkstra exploration.
             - If Order, iterate through potential in the given Order
             - If non-Sequence Hashable, first start with the given Hashable (node); rest of order is undetermined
             - If Sequence[Hashable] (sequence of nodes), iterate in the order given by the sequence.
@@ -37,19 +34,24 @@ def bfs(
         neighbor_order: optional order in which to explore neighbors of a node; if not provided, undetermined order.
 
     Returns:
-        list[Hashable]: level order of nodes in the BFS traversal
+        list[Hashable]: distance order of nodes in the Dijkstra traversal
         dict[Hashable, float]: map from node to the distance from its seed to the node
         dict[Hashable, Hashable]: parents dict which encodes the traversal tree
         list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes, with the same order
-            as the level order of the BFS traversal.
+            as the distance order of the Dijkstra traversal.
         bool: True if graph contains cycle; False otherwise
     """
+    for edge in g.get_edges():
+        if g.get_weight(edge) < 0:
+            raise ValueError(
+                "Dijkstra should only be run on graphs with all non-negative edge weights."
+            )
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
     parents = {}
     dists = {}
     reached = set()
-    levelorder = []
+    distorder = []
     ccs = []
     contains_cycle = False
     for u in seed_nodes:
@@ -57,41 +59,42 @@ def bfs(
             (
                 parents_from_u,
                 dists_from_u,
-                levelorder_from_u,
+                distorder_from_u,
                 contains_cycle_from_u,
-            ) = bfs_from(g, u, neighbor_order, reached, use_approach_1=use_approach_1)
+            ) = dijkstra_from(
+                g, u, neighbor_order, reached, use_approach_1=use_approach_1
+            )
             parents.update(parents_from_u)
             dists.update(dists_from_u)
-            levelorder.extend(levelorder_from_u)
-            ccs.append(levelorder_from_u)
+            distorder.extend(distorder_from_u)
+            ccs.append(distorder_from_u)
             contains_cycle = contains_cycle or contains_cycle_from_u
-    return parents, dists, levelorder, ccs, contains_cycle
+    return parents, dists, distorder, ccs, contains_cycle
 
 
 # TODO test this separately
-def bfs_from(
+def dijkstra_from(
     g: Graph,
     u: Hashable,
     neighbor_order: Order | None,
     reached: set | None = None,
     use_approach_1: bool = True,
 ) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable], bool]:
-    _bfs_from: Callable = (
-        _bfs_from_approach_1 if use_approach_1 else _bfs_from_approach_2
+    _dijkstra_from: Callable = (
+        _dijkstra_from_approach_1 if use_approach_1 else _dijkstra_from_approach_2
     )
     if reached is None:
         reached = set()
-    return _bfs_from(g, u, neighbor_order, reached)
+    return _dijkstra_from(g, u, neighbor_order, reached)
 
 
-def _bfs_from_approach_1(
+def _dijkstra_from_approach_1(
     g: Graph,
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
 ) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable], bool]:
-    """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
-    use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
+    """Same as the iterative BFS implementation, except use a priority queue instead of a queue
     AND only update parents if a node isn't already in it.
 
     In this approach (approach 1), we replace the "if v not in reached" with "if v not in parents" to achieve
@@ -108,25 +111,35 @@ def _bfs_from_approach_1(
     """
     parents = {u: None}
     dists = {u: 0}
-    to_explore = [u]
-    levelorder = []
+    # pq_entry_count is used so (1) PQ is stable (for testing) and (2) so nodes don't have to be comparable
+    pq_entry_count = 0
+    to_explore = [(0, pq_entry_count, u)]
+    heapq.heapify(to_explore)
+    pq_entry_count += 1
+    distorder = []
     contains_cycle = False
     while to_explore:
-        u = to_explore.pop(0)
-        # don't need to do "continue if u in reached" since a node never gets added twice to the queue
+        _, _, u = heapq.heappop(to_explore)
+        # if I used a update_priority on the priority queue, I wouldn't need to do this, since nodes would never get
+        # added twice to the priority queue. But since I just add with a lower priority instead of updating priority,
+        # I need this "continue if u in reached"
+        if u in reached:
+            continue
         reached.add(u)
-        levelorder.append(u)
+        distorder.append(u)
         for v in get_ordered_neighbors(g, u, neighbor_order):
-            if v not in parents:
-                parents[v] = u
-                dists[v] = dists[u] + 1
-                to_explore.append(v)
-            else:
+            w = g.get_weight((u, v))
+            if v in parents:
                 contains_cycle = contains_cycle or v != parents[u]
-    return parents, dists, levelorder, contains_cycle
+            if v not in parents or dists[v] > dists[u] + w:
+                parents[v] = u
+                dists[v] = dists[u] + w
+                heapq.heappush(to_explore, (dists[v], pq_entry_count, v))
+                pq_entry_count += 1
+    return parents, dists, distorder, contains_cycle
 
 
-def _bfs_from_approach_2(
+def _dijkstra_from_approach_2(
     g: Graph,
     u: Hashable,
     neighbor_order: Order | None,
@@ -143,19 +156,33 @@ def _bfs_from_approach_2(
     """
     parents = {u: None}
     dists = {u: 0}
-    to_explore = [u]
-    levelorder = []
+    # pq_entry_count is used so (1) PQ is stable (for testing) and (2) so nodes don't have to be comparable
+    pq_entry_count = 0
+    to_explore = [(0, pq_entry_count, u)]
+    pq_entry_count += 1
+    distorder = []
     reached.add(u)
     contains_cycle = False
+    actually_reached = (
+        set()
+    )  # only needed b/c priority queue doesn't have update priority feature
     while to_explore:
-        u = to_explore.pop(0)
-        levelorder.append(u)
+        _, _, u = heapq.heappop(to_explore)
+        # if I used a update_priority on the priority queue, I wouldn't need to do this, since nodes would never get
+        # added twice to the priority queue. But since I just add with a lower priority instead of updating priority,
+        # I need this "continue if u in actually_reached"
+        if u in actually_reached:
+            continue
+        actually_reached.add(u)
+        distorder.append(u)
         for v in get_ordered_neighbors(g, u, neighbor_order):
-            if v not in reached:
-                parents[v] = u
-                dists[v] = dists[u] + 1
-                to_explore.append(v)
-                reached.add(v)
-            else:
+            w = g.get_weight((u, v))
+            if v in reached:
                 contains_cycle = contains_cycle or v != parents[u]
-    return parents, dists, levelorder, contains_cycle
+            if v not in reached or dists[v] > dists[u] + w:
+                parents[v] = u
+                dists[v] = dists[u] + w
+                heapq.heappush(to_explore, (dists[v], pq_entry_count, v))
+                pq_entry_count += 1
+                reached.add(v)
+    return parents, dists, distorder, contains_cycle

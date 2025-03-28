@@ -7,7 +7,9 @@ from dsa.graphs.analysis.traversal_type import TraversalType
 from dsa.graphs.graph_factory import GraphFactory
 
 
-@pytest.mark.parametrize("traversal_type", (TraversalType.DFS, TraversalType.BFS))
+@pytest.mark.parametrize(
+    "traversal_type", (TraversalType.DFS, TraversalType.BFS, TraversalType.DIJKSTRA)
+)
 def test_get_connected_components(traversal_type: TraversalType) -> None:
     g_complete = GraphFactory.create_complete_graph(4)
     ccs = get_connected_components(g_complete, traversal_type=traversal_type)
