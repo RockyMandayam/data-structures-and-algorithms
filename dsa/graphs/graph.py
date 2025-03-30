@@ -174,9 +174,12 @@ class Graph:
             neighbors[v].add((u, v))
         return neighbors
 
-    def get_node_attrs(self, node: Hashable) -> Mapping:
+    def _validate_node(self, node: Hashable) -> None:
         if node not in self._nodes:
             raise ValueError(f"Unknown node {node=}")
+
+    def get_node_attrs(self, node: Hashable) -> Mapping:
+        self._validate_node(node)
         return self._nodes[node]
 
     def get_node_attr(self, node: Hashable, key: Any) -> Any:
@@ -223,10 +226,8 @@ class Graph:
     def is_edge(self, edge: tuple[Hashable, Hashable]) -> bool:
         """Returns True if edge= is an edge in this graph; False otherwise"""
         u, v = edge
-        if u not in self._nodes:
-            raise ValueError(f"Unknown node {u=}")
-        if v not in self._nodes:
-            raise ValueError(f"Unknown node {v=}")
+        self._validate_node(u)
+        self._validate_node(v)
         return (u, v) in self._edges or (v, u) in self._edges
 
     def are_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> bool:
@@ -259,10 +260,8 @@ class Graph:
     ) -> None:
         """Adds edge if not present; errors if also present"""
         u, v = edge
-        if u not in self._nodes:
-            raise ValueError(f"Unknown node {u=}")
-        if v not in self._nodes:
-            raise ValueError(f"Unknown node {v=}")
+        self._validate_node(u)
+        self._validate_node(v)
         if self.is_edge(edge):
             raise ValueError(f"Edge ({u}, {v}) already exists.")
         self._edges[edge] = (Graph.DEFAULT_EDGE_WEIGHT, attributes)
@@ -284,3 +283,7 @@ class Graph:
         # can't update tuple, need to reassign
         _, attrs = self._edges[(u, v)]
         self._edges[(u, v)] = (weight, attrs)
+
+    def get_degree(self, u: Hashable) -> int:
+        self._validate_node(u)
+        return len(self[u])
