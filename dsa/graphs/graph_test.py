@@ -4,6 +4,7 @@ from collections.abc import Callable, Iterable, Mapping
 import pytest
 
 from dsa.graphs.graph import Graph
+from dsa.graphs.graph_factory import GraphFactory
 
 
 class TestGraph:
@@ -346,3 +347,16 @@ class TestGraph:
         assert g.num_edges() == 2
         assert g.is_edge((1, 0))
         assert g.is_edge((2, 0))
+
+    def test_A(self) -> None:
+        # TODO test node_order
+        g = Graph(3)
+        assert g.A == [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+
+        g.add_edge((0, 2))
+        assert g.A == [[0, 0, 1], [0, 0, 0], [1, 0, 0]]
+        g.add_edge((0, 1))
+        assert g.A == [[0, 1, 1], [1, 0, 0], [1, 0, 0]]
+
+        g = GraphFactory.create_complete_graph(3)
+        assert g.A == [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
