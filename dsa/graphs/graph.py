@@ -22,8 +22,8 @@ class Graph:
         _edges (Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]]): Map from edge (tuple of nodes (u,v)) to
             a tuple of the weight of the edge (float) and its attributes (Mapping)
             - NOTE: an edge (u,v) will be present as (u,v) or (v,u) but not both
-        _neighbors (Mapping[Hashable, set]): Map from node to its neighbors (a set is used for neighbors - no duplicates!)
-            - _neighbors will have the exact same nodes as _nodes, even nodes with no neighbors
+        _incident_edges (Mapping[Hashable, set]): Map from node to its neighbors (a set is used for neighbors - no duplicates!)
+            - _incident_edges will have the exact same nodes as _nodes, even nodes with no neighbors
             - NOTE: this does contain redundant information that is already present, but this adjacency set is useful for fast
                 lookup of neighbors. Note that an edge (u,v) will manifest as v being a neighbor u and u being a neighbor of v
     """
@@ -287,3 +287,33 @@ class Graph:
     def get_degree(self, u: Hashable) -> int:
         self._validate_node(u)
         return len(self[u])
+
+    @property
+    def A(self, node_order: list[Hashable] | None = None) -> list[list[int]]:
+        # TODO cache for efficiency, but invalidate when graph is modified?
+        if node_order is not None and len(node_order) != len(self):
+            raise ValueError(
+                f"If specifying node_order, it must include every node exactly once"
+            )
+        if node_order is None:
+            try:
+                nodes = sorted(self._nodes)
+            except TypeError:
+                raise ValueError(
+                    "Must provide node_order since nodes are not sortable."
+                )
+        else:
+            if len(node_order) != len(self):
+                raise ValueError(
+                    f"If specifying node_order, it must include every node exactly once"
+                )
+            nodes = node_order
+        n = len(nodes)
+        A = [[0 for _ in range(n)] for _ in range(n)]
+        node_to_index = {}
+        for index, node in enumerate(nodes):
+            node_to_index[node] = index
+        for u, v in self.get_edges():
+            i, j = node_to_index[u], node_to_index[v]
+            A[j][i] = A[i][j] = 1
+        return A
