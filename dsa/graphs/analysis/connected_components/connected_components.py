@@ -7,6 +7,10 @@ from dsa.graphs.analysis.traversal_type import TraversalType
 from dsa.graphs.graph import Graph
 
 
+def is_connected(g: Graph) -> bool:
+    return len(get_connected_components(g)) == 1
+
+
 def get_connected_components(
     g: Graph, traversal_type: TraversalType = TraversalType.DFS
 ) -> list[list[Hashable]]:

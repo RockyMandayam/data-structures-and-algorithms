@@ -317,3 +317,10 @@ class Graph:
             i, j = node_to_index[u], node_to_index[v]
             A[j][i] = A[i][j] = 1
         return A
+
+    def get_default_index_in_A(self, u: Hashable) -> int:
+        self._validate_node(u)
+        try:
+            nodes = sorted(self._nodes)
+        except TypeError:
+            raise ValueError("Nodes not sortable")

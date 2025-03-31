@@ -2,6 +2,7 @@ import pytest
 
 from dsa.graphs.analysis.centrality.node_centrality.node_centrality import (
     get_degree_centrality,
+    get_eigvec_centralities,
 )
 from dsa.graphs.graph import Graph
 from dsa.graphs.graph_factory import GraphFactory
@@ -51,3 +52,19 @@ def test_get_degree_centrality() -> None:
     assert get_degree_centrality(g, 4, normalized=True) == pytest.approx(2 / 5)
     assert get_degree_centrality(g, 5, normalized=False) == 4
     assert get_degree_centrality(g, 5, normalized=True) == pytest.approx(4 / 5)
+
+
+def test_get_eigenvector_centralities() -> None:
+    # examples from: https://www2.stat.duke.edu/~pdh10/Teaching/567/Notes/l6_centrality_paused.pdf
+    # star graph
+    g = Graph(nodes=5, edges=((0, 2), (1, 2), (2, 3), (2, 4)))
+    centralities = get_eigvec_centralities(g, normalization="l2")
+    assert centralities == pytest.approx(
+        [0.3535534, 0.3535534, 0.7071068, 0.3535534, 0.3535534]
+    )
+    # Y graph
+    g = Graph(nodes=5, edges=((0, 1), (1, 2), (2, 3), (2, 4)))
+    centralities = get_eigvec_centralities(g, normalization="l2")
+    assert centralities == pytest.approx(
+        [0.2705981, 0.5, 0.6532815, 0.3535534, 0.3535534]
+    )
