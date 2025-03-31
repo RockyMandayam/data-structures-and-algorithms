@@ -360,3 +360,13 @@ class TestGraph:
 
         g = GraphFactory.create_complete_graph(3)
         assert g.A == [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+
+        # example: https://www.jsums.edu/nmeghanathan/files/2015/08/CSC641-Fall2015-Module-2-Centrality-Measures.pdf
+        g = Graph(nodes=5, edges=((0, 1), (1, 3), (2, 3), (2, 4), (3, 4)))
+        assert g.A == [
+            [0, 1, 0, 0, 0],
+            [1, 0, 0, 1, 0],
+            [0, 0, 0, 1, 1],
+            [0, 1, 1, 0, 1],
+            [0, 0, 1, 1, 0],
+        ]
