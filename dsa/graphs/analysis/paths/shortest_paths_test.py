@@ -1,3 +1,5 @@
+import pytest
+
 from dsa.graphs.analysis.paths.shortest_paths import get_shortest_paths
 from dsa.graphs.graph import Graph
 
@@ -42,3 +44,8 @@ def test_get_shortest_paths() -> None:
         5: 2,
         6: 3,
     }
+
+    # negative edge causes negative cycle (since it's undirected), so it should fail
+    g.set_weight((3, 6), -1)
+    with pytest.raises(ValueError):
+        get_shortest_paths(g, 0)
