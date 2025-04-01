@@ -6,6 +6,7 @@ from dsa.graphs.analysis.traversal_type import TraversalType
 from dsa.graphs.graph import Graph
 
 
+# TODO implement A star
 def get_shortest_paths(
     g: Graph,
     s: Hashable,
