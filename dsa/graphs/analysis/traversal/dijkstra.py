@@ -24,6 +24,8 @@ def dijkstra(
 ]:
     """Dijkstra's algorithm implementation. VERY similar to BFS.
 
+    https://www.youtube.com/watch?v=iMoFtG1md3w
+
     Args:
         g: Graph on which to perform Dijkstra's algorithm
         seed_order: Order in which to iterate through potential start nodes for Dijkstra exploration.
