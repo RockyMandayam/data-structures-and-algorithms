@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterable, Mapping
 
 import pytest
 
-from dsa.graphs.graph import Graph
+from dsa.graphs.digraph import Digraph
 from dsa.graphs.graph_factory import GraphFactory
 
 
@@ -25,7 +25,7 @@ class TestGraph:
 
     # TODO test node and edge attributes
 
-    def _test_iter(self, g: Graph, exp_cnt: int) -> None:
+    def _test_iter(self, g: Digraph, exp_cnt: int) -> None:
         cnt = 0
         for _ in g:
             cnt += 1
@@ -36,22 +36,22 @@ class TestGraph:
         # use iter() to make sure to try actual iterable non-sequences
         # (earlier, there was a bug with iterable non-sequences)
         with pytest.raises(ValueError):
-            Graph(nodes={None: {}})
+            Digraph(nodes={None: {}})
         with pytest.raises(ValueError):
-            Graph(nodes=(None,))
+            Digraph(nodes=(None,))
         with pytest.raises(ValueError):
-            Graph(nodes=iter((None,)))
+            Digraph(nodes=iter((None,)))
         with pytest.raises(ValueError):
-            Graph(nodes=-1)
+            Digraph(nodes=-1)
         with pytest.raises(ValueError):
-            Graph(nodes=(1,), edges=((0, 1),))
+            Digraph(nodes=(1,), edges=((0, 1),))
         with pytest.raises(ValueError):
-            Graph(nodes=(1,), edges=((1, None),))
+            Digraph(nodes=(1,), edges=((1, None),))
         # now test with combination of valid and invalid nodes, and same for edges
         with pytest.raises(ValueError):
-            Graph(nodes=(1, 0, None))
+            Digraph(nodes=(1, 0, None))
         with pytest.raises(ValueError):
-            Graph(
+            Digraph(
                 nodes=(
                     0,
                     1,
@@ -60,7 +60,7 @@ class TestGraph:
                 edges=((0, 1), (0, None)),
             )
         with pytest.raises(ValueError):
-            Graph(
+            Digraph(
                 nodes=(
                     0,
                     1,
@@ -69,7 +69,7 @@ class TestGraph:
                 edges=((0, 1), (0, -1)),
             )
 
-        g = Graph(nodes=(1,))
+        g = Digraph(nodes=(1,))
         with pytest.raises(ValueError):
             g.is_edge((2, 1))
         with pytest.raises(ValueError):
@@ -87,7 +87,7 @@ class TestGraph:
     @pytest.mark.parametrize("name", ("test_name", "", None))
     def test_empty_graph(self, name) -> None:
         # it should just not raise an error
-        g = Graph(name=name)
+        g = Digraph(name=name)
         assert len(g) == 0
         assert g.num_edges() == 0
         assert len(g.get_nodes()) == 0
@@ -96,7 +96,7 @@ class TestGraph:
         with pytest.raises(ValueError):
             g.are_edges([(0, 1)])
         name_str = name or ""
-        assert str(g) == f"Graph '{name_str}' with 0 nodes and 0 edges"
+        assert str(g) == f"Directed Graph '{name_str}' with 0 nodes and 0 edges"
         self._test_iter(g, 0)
         assert 1 not in g
         assert g not in g
@@ -135,14 +135,14 @@ class TestGraph:
         nodes = {1: {}}
         if nodes_iterable_factory:
             nodes = nodes_iterable_factory(nodes)
-        g = Graph(nodes=nodes)
+        g = Digraph(nodes=nodes)
         assert len(g) == 1
         assert tuple(g.get_nodes()) == (1,)
         assert g.num_edges() == 0
         assert not g.is_edge((1, 1))
         assert not g.are_edges([(1, 1)])
         # note special case of singular 'node' (not 'nodes') for 1 node
-        assert str(g) == f"Graph '' with 1 node and 0 edges"
+        assert str(g) == f"Directed Graph '' with 1 node and 0 edges"
         self._test_iter(g, 1)
         assert 1 in g
         assert 2 not in g
@@ -154,7 +154,7 @@ class TestGraph:
             g[None]
 
         ### test when nodes is an int
-        g = Graph(nodes=1)
+        g = Digraph(nodes=1)
         assert len(g) == 1
         assert tuple(g.get_nodes()) == (0,)
         assert g.num_edges() == 0
@@ -166,20 +166,20 @@ class TestGraph:
         if edges_sequence_factory:
             edges = edges_sequence_factory(edges)
         with pytest.raises(ValueError):
-            g = Graph(nodes=nodes, edges=edges)
+            g = Digraph(nodes=nodes, edges=edges)
 
         ### test with two nodes
         nodes = {1: {}, 2: {}}
         if nodes_iterable_factory:
             nodes = nodes_iterable_factory(nodes)
-        g = Graph(nodes=nodes)
+        g = Digraph(nodes=nodes)
         assert len(g) == 2
         assert sorted(g.get_nodes()) == [1, 2]
         assert g.num_edges() == 0
         assert not g.is_edge((1, 1))
         assert not g.is_edge((2, 2))
         assert not g.is_edge((1, 2))
-        assert str(g) == f"Graph '' with 2 nodes and 0 edges"
+        assert str(g) == f"Directed Graph '' with 2 nodes and 0 edges"
         self._test_iter(g, 2)
         assert 1 in g
         assert 2 in g
@@ -191,6 +191,9 @@ class TestGraph:
             g[3]
         with pytest.raises(KeyError):
             g[None]
+        # test the 1 edge string case
+        g.add_edge((1, 2))
+        assert str(g) == f"Directed Graph '' with 2 nodes and 1 edge"
 
         ### test with two nodes and an edge
         nodes = {1: {}, 2: {}}
@@ -201,22 +204,19 @@ class TestGraph:
         if edges_sequence_factory:
             edges = edges_sequence_factory(edges)
         with pytest.raises(ValueError):
-            g = Graph(nodes=nodes, edges=edges)
+            g = Digraph(nodes=nodes, edges=edges)
         # test "explicit" duplicate using iterable format
         edges = ((1, 2), (1, 2))
         with pytest.raises(ValueError):
-            g = Graph(nodes=nodes, edges=edges)
-        # test "duplicate" (reversed order) edge
+            g = Digraph(nodes=nodes, edges=edges)
+        # test reverse order edges
         edges = {(1, 2): {}, (2, 1): {}}
         if edges_sequence_factory:
             edges = edges_sequence_factory(edges)
-        with pytest.raises(ValueError):
-            g = Graph(nodes=nodes, edges=edges)
-        # now allow it by enabling skip_duplicate_edges
-        g = Graph(nodes=nodes, edges=edges, skip_duplicate_edges=True)
+        g = Digraph(nodes=nodes, edges=edges)
         assert len(g) == 2
         assert sorted(g.get_nodes()) == [1, 2]
-        assert g.num_edges() == 1
+        assert g.num_edges() == 2
         assert g.is_edge((1, 2))
         assert g.is_edge((2, 1))
         assert not g.is_edge((1, 1))
@@ -224,8 +224,7 @@ class TestGraph:
         assert g.are_edges([(1, 2), (2, 1)])
         assert g.are_edges([(1, 2), (2, 1), (1, 2)])
         assert not g.are_edges([(1, 2), (1, 1)])
-        # note special case of singular 'edge' (not 'edges') for 1 edge
-        assert str(g) == f"Graph '' with 2 nodes and 1 edge"
+        assert str(g) == f"Directed Graph '' with 2 nodes and 2 edges"
         self._test_iter(g, 2)
         assert 1 in g
         assert 2 in g
@@ -258,20 +257,23 @@ class TestGraph:
         }
         if edges_sequence_factory:
             edges = edges_sequence_factory(edges)
-        g = Graph(nodes=nodes, edges=edges)
+        g = Digraph(nodes=nodes, edges=edges)
         assert len(g) == 7
         assert len(g.get_nodes()) == 7 and set(g.get_nodes()) == set(
             (1, 2, "test1", ("a", "b", "c"), "a", "b", "c")
         )
         assert g.num_edges() == 4
         assert g.is_edge((1, "test1"))
-        assert g.is_edge((1, 2))
+        assert not g.is_edge(("test1", 1))
+        assert g.is_edge((2, 1))
+        assert not g.is_edge((1, 2))
         assert g.is_edge((2, "test1"))
         assert g.is_edge(("a", ("a", "b", "c")))
         assert not g.is_edge((1, "a"))
-        assert g.are_edges([(1, 2), ("a", ("a", "b", "c"))])
-        assert not g.are_edges([("a", 2), (1, 2)])
-        assert str(g) == f"Graph '' with 7 nodes and 4 edges"
+        assert g.are_edges([(2, 1), ("a", ("a", "b", "c"))])
+        assert not g.are_edges([(1, 2), ("a", ("a", "b", "c"))])
+        assert not g.are_edges([("a", 2), (2, 1)])
+        assert str(g) == f"Directed Graph '' with 7 nodes and 4 edges"
         self._test_iter(g, 7)
         assert 1 in g
         assert "test1" in g
@@ -279,9 +281,9 @@ class TestGraph:
         assert "a" in g
         assert ("b", "c") not in g
         assert None not in g
-        assert len(g[1]) == 2
+        assert len(g[1]) == 1
         assert len(g[2]) == 2
-        assert len(g["test1"]) == 2
+        assert len(g["test1"]) == 0
         assert len(g["a"]) == 1
         assert len(g["b"]) == 0
         with pytest.raises(KeyError):
@@ -291,7 +293,7 @@ class TestGraph:
 
     def test_add_node(self) -> None:
         # invalid nodes
-        g = Graph()
+        g = Digraph()
         with pytest.raises(ValueError):
             g.add_node(None)
         g.add_node(0)
@@ -307,13 +309,11 @@ class TestGraph:
 
     def test_add_edge(self) -> None:
         # invalid edges
-        g = Graph(nodes=4, edges=((1, 2),))
+        g = Digraph(nodes=4, edges=((1, 2),))
         with pytest.raises(ValueError):
             g.add_edge((None, None))
         with pytest.raises(ValueError):
             g.add_edge((1, 2))
-        with pytest.raises(ValueError):
-            g.add_edge((2, 1))
 
         # valid edges
         g.add_edge((2, 3))
@@ -322,51 +322,55 @@ class TestGraph:
         assert g.num_edges() == 2
         for u in range(4):
             for v in range(4):
-                if (u, v) in ((1, 2), (2, 1), (2, 3), (3, 2)):
+                if (u, v) in ((1, 2), (2, 3)):
                     assert g.is_edge((u, v))
                 else:
                     assert not g.is_edge((u, v))
         assert g.are_edges([(2, 3)])
-        assert not g.are_edges([(2, 3), (3, 1)])
-        assert str(g) == f"Graph '' with 4 nodes and 2 edges"
+        assert not g.are_edges([(2, 3), (1, 3)])
+        assert str(g) == f"Directed Graph '' with 4 nodes and 2 edges"
         self._test_iter(g, 4)
         assert all(v in g for v in range(4))
         assert -1 not in g
         assert None not in g
         assert len(g[0]) == 0
         assert len(g[1]) == 1
-        assert len(g[2]) == 2
+        assert len(g[2]) == 1
+
+        # can add reverse direction
+        g.add_edge((2, 1))
+        assert g.num_edges() == 3
 
     def test_add_edges(self) -> None:
-        g = Graph(3)
+        g = Digraph(3)
         assert len(g) == 3
         assert g.num_edges() == 0
 
         g.add_edges(((0, 1), (0, 2)))
         assert len(g) == 3
         assert g.num_edges() == 2
-        assert g.is_edge((1, 0))
-        assert g.is_edge((2, 0))
+        assert g.is_edge((0, 1))
+        assert not g.is_edge((1, 0))
+        assert g.is_edge((0, 2))
+        assert not g.is_edge((2, 0))
 
     def test_A(self) -> None:
         # TODO test node_order
-        g = Graph(3)
+        g = Digraph(3)
         assert g.A == [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 
         g.add_edge((0, 2))
-        assert g.A == [[0, 0, 1], [0, 0, 0], [1, 0, 0]]
+        assert g.A == [[0, 0, 0], [0, 0, 0], [1, 0, 0]]
         g.add_edge((0, 1))
-        assert g.A == [[0, 1, 1], [1, 0, 0], [1, 0, 0]]
-
-        g = GraphFactory.create_complete_graph(3)
-        assert g.A == [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+        assert g.A == [[0, 0, 0], [1, 0, 0], [1, 0, 0]]
 
         # example: https://www.jsums.edu/nmeghanathan/files/2015/08/CSC641-Fall2015-Module-2-Centrality-Measures.pdf
-        g = Graph(nodes=5, edges=((0, 1), (1, 3), (2, 3), (2, 4), (3, 4)))
+        # but make it directed aribtrarily
+        g = Digraph(nodes=5, edges=((0, 1), (3, 1), (2, 3), (2, 4), (3, 4)))
         assert g.A == [
-            [0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0],
             [1, 0, 0, 1, 0],
-            [0, 0, 0, 1, 1],
-            [0, 1, 1, 0, 1],
+            [0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0],
             [0, 0, 1, 1, 0],
         ]

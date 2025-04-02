@@ -43,17 +43,14 @@ class Graph:
         skip_duplicate_edges: bool = False,
     ) -> None:
         self.name = name or ""
-        self._nodes = Graph._construct_and_validate_nodes(nodes)
-        self._edges = Graph._construct_and_validate_edges(
-            self._nodes, edges, skip_duplicate_edges
-        )
+        self._set_and_validate_nodes(nodes)
+        self._set_and_validate_edges(edges, skip_duplicate_edges)
         self._incident_edges = Graph._construct_incident_edges(self._nodes, self._edges)
 
-    @staticmethod
-    def _construct_and_validate_nodes(
-        nodes: Mapping[Hashable, Mapping] | Iterable[Hashable] | int | None
-    ) -> Mapping[Hashable, Mapping]:
-        """Construct nodes Mapping by converting input nodes to the right format, and validate."""
+    def _set_and_validate_nodes(
+        self, nodes: Mapping[Hashable, Mapping] | Iterable[Hashable] | int | None
+    ) -> None:
+        """Construct and validate nodes Mapping by converting input nodes to the right format and set self._nodes."""
         # handle None case
         if nodes is None:
             nodes = {}
@@ -78,11 +75,10 @@ class Graph:
         # validate nodes
         if None in nodes:
             raise ValueError("None is not a valid node.")
-        return nodes
+        self._nodes = nodes
 
-    @staticmethod
-    def _construct_and_validate_edges(
-        nodes: Mapping[Hashable, Mapping],
+    def _set_and_validate_edges(
+        self,
         edges: Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]]
         | Mapping[tuple[Hashable, Hashable], Mapping]
         | Mapping[tuple[Hashable, Hashable], float]
@@ -136,31 +132,44 @@ class Graph:
             if not skip_duplicate_edges and len(edges_map) != len(edges):
                 raise ValueError("Duplicate edges not allowed")
             edges = edges_map
+        # validate nodes in edges
+        for u, v in edges:
+            self._validate_node(u)
+            self._validate_node(v)
         # validate edges
         # if edges is already a Mapping, it can have duplicates (by having (u,v) and (v,u) which represent
         # the same edge), and it can have a self-loop. Check for these here. But it can't have "explicit duplicates"
         # in that it can't repeat (u,v) twice
-        validated_edges = {}
         for u, v in edges:
             if u == v:
                 raise ValueError(
                     f"Found self-loop for node {u}; self-loops are not allowed."
                 )
-            if (v, u) in validated_edges:
+        edges = self._deduplicate_undirected_edges(edges, skip_duplicate_edges)
+        self._edges = edges
+
+    # TODO design this better
+    @classmethod
+    def _deduplicate_undirected_edges(
+        cls,
+        edges: Mapping[tuple[Hashable, Hashable], tuple],
+        skip_duplicate_edges: bool,
+    ) -> Mapping[tuple[Hashable, Hashable], tuple]:
+        deduplicated_edges = {}
+        for u, v in edges:
+            if (v, u) in deduplicated_edges:
                 if skip_duplicate_edges:
+                    # just don't add (u,v)
                     continue
                 else:
+                    # raise error for (u,v) since (v,u) exists
                     raise ValueError(
-                        f"Found duplicate edge {(u,v)}; duplicate edges not allowed"
+                        f"Found duplicate edge {(v,u)}; edge {(u,v)} (undirected) already exists."
                     )
-            validated_edges[(u, v)] = edges[(u, v)]
-        edges = validated_edges
-        for u, v in edges:
-            if u not in nodes:
-                raise ValueError(f"Unknown node {u} found in edges.")
-            if v not in nodes:
-                raise ValueError(f"Unknown node {v} found in edges.")
-        return edges
+            else:
+                # add (u, v), the normal case
+                deduplicated_edges[(u, v)] = edges[(u, v)]
+        return deduplicated_edges
 
     @staticmethod
     def _construct_incident_edges(
@@ -204,7 +213,7 @@ class Graph:
     def __contains__(self, node: Hashable) -> bool:
         return node in self._nodes
 
-    def __getitem__(self, node: Hashable) -> Iterable[Hashable]:
+    def __getitem__(self, node: Hashable) -> Sequence[Hashable]:
         # KeyError desired if node not in self._incident_edges
         neighbors = []
         for u, v in self._incident_edges[node]:
@@ -223,24 +232,32 @@ class Graph:
             return self._edges
         return self._incident_edges[node]
 
-    def is_edge(self, edge: tuple[Hashable, Hashable]) -> bool:
-        """Returns True if edge= is an edge in this graph; False otherwise"""
+    def _get_canonical_edge(
+        self, edge: tuple[Hashable, Hashable]
+    ) -> tuple[Hashable, Hashable] | None:
         u, v = edge
         self._validate_node(u)
         self._validate_node(v)
-        return (u, v) in self._edges or (v, u) in self._edges
+        if (u, v) in self._edges:
+            return (u, v)
+        elif (v, u) in self._edges:
+            return (v, u)
+        else:
+            return None
+
+    def is_edge(self, edge: tuple[Hashable, Hashable]) -> bool:
+        """Returns True if edge is an edge in this graph; False otherwise"""
+        return self._get_canonical_edge(edge) is not None
 
     def are_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> bool:
         """Returns True if all edges are in the graph; False otherwise"""
         return all(self.is_edge((u, v)) for u, v in edges)
 
     def get_weight(self, edge: tuple[Hashable, Hashable]) -> None:
-        if not self.is_edge(edge):
-            raise ValueError(f"Unknown edge {edge=}")
-        u, v = edge
-        if (v, u) in self._edges:
-            u, v = v, u
-        return self._edges[(u, v)][0]
+        edge = self._get_canonical_edge(edge)
+        if not edge:
+            raise ValueError(f"Unknown edge {edge}")
+        return self._edges[edge][0]
 
     def add_node(self, node: Hashable, attributes: Mapping | None = None) -> None:
         """Adds node if not present and not None; errors if already present"""
@@ -275,18 +292,16 @@ class Graph:
     def set_weight(self, edge: tuple[Hashable, Hashable], weight: float) -> None:
         if not math.isfinite(weight):
             raise ValueError(f"Invalid {weight=}")
-        if not self.is_edge(edge):
+        edge = self._get_canonical_edge(edge)
+        if not edge:
             raise ValueError(f"Unknown edge {edge=}")
-        u, v = edge
-        if (v, u) in self._edges:
-            u, v = v, u
         # can't update tuple, need to reassign
-        _, attrs = self._edges[(u, v)]
-        self._edges[(u, v)] = (weight, attrs)
+        _, attrs = self._edges[edge]
+        self._edges[edge] = (weight, attrs)
 
     def get_degree(self, u: Hashable) -> int:
         self._validate_node(u)
-        return len(self[u])
+        return len(self._incident_edges[u])
 
     @property
     def A(self, node_order: list[Hashable] | None = None) -> list[list[int]]:
