@@ -3,7 +3,11 @@ import pytest
 from dsa.graphs.analysis.centrality.node_centrality.node_centrality import (
     get_degree_centrality,
     get_eigvec_centralities,
+    get_in_degree_centrality,
+    get_out_degree_centrality,
 )
+from dsa.graphs.digraph import Digraph
+from dsa.graphs.digraph_factory import DigraphFactory
 from dsa.graphs.graph import Graph
 from dsa.graphs.graph_factory import GraphFactory
 
@@ -68,3 +72,41 @@ def test_get_eigenvector_centralities() -> None:
     assert centralities == pytest.approx(
         [0.2705981, 0.5, 0.6532815, 0.3535534, 0.3535534]
     )
+
+
+def test_get_in_degree() -> None:
+    dg = Digraph(nodes=4)
+    for u in range(4):
+        assert get_in_degree_centrality(dg, u, normalized=False) == 0
+        assert get_in_degree_centrality(dg, u, normalized=True) == 0
+
+    dg = DigraphFactory.create_spindly_tree(5)
+    assert get_in_degree_centrality(dg, 0, normalized=False) == 0
+    assert get_in_degree_centrality(dg, 0, normalized=True) == pytest.approx(0)
+    for u in (1, 2, 3, 4):
+        assert get_in_degree_centrality(dg, u, normalized=False) == 1
+        assert get_in_degree_centrality(dg, u, normalized=True) == pytest.approx(1 / 4)
+
+    dg = DigraphFactory.create_complete_digraph(4)
+    for u in range(4):
+        assert get_in_degree_centrality(dg, u, normalized=False) == 3
+        assert get_in_degree_centrality(dg, u, normalized=True) == pytest.approx(1)
+
+
+def test_get_out_degree() -> None:
+    dg = Digraph(nodes=4)
+    for u in range(4):
+        assert get_out_degree_centrality(dg, u, normalized=False) == 0
+        assert get_out_degree_centrality(dg, u, normalized=True) == 0
+
+    dg = DigraphFactory.create_spindly_tree(5)
+    for u in (0, 1, 2, 3):
+        assert get_out_degree_centrality(dg, u, normalized=False) == 1
+        assert get_out_degree_centrality(dg, u, normalized=True) == pytest.approx(1 / 4)
+    assert get_out_degree_centrality(dg, 4, normalized=False) == 0
+    assert get_out_degree_centrality(dg, 4, normalized=True) == pytest.approx(0)
+
+    dg = DigraphFactory.create_complete_digraph(4)
+    for u in range(4):
+        assert get_out_degree_centrality(dg, u, normalized=False) == 3
+        assert get_out_degree_centrality(dg, u, normalized=True) == pytest.approx(1)

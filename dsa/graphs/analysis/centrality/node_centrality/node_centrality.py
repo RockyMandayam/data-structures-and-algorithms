@@ -3,6 +3,7 @@ from collections.abc import Hashable
 import numpy as np
 
 from dsa.graphs.analysis.connected_components.connected_components import is_connected
+from dsa.graphs.digraph import Digraph
 from dsa.graphs.graph import Graph
 
 
@@ -61,3 +62,37 @@ def get_eigvec_centralities(g: Graph, normalization: str = "l1") -> list[float]:
             eigvec_for_max_eigval
         )
     return list(eigvec_for_max_eigval)
+
+
+def get_in_degree_centrality(
+    dg: Digraph, u: Hashable, normalized: bool = True
+) -> float:
+    """Return the normalized (divided by number_of_nodes - 1) degree centrality of node u in graph g."""
+    deg = dg.get_in_degree(u)
+    if normalized:
+        deg = deg / (len(dg) - 1)
+    return deg
+
+
+# TODO test this
+def get_sorted_in_degree_centralities(dg: Digraph, normalized: bool = True) -> float:
+    degs = [get_in_degree_centrality(dg, u, normalized=normalized) for u in dg]
+    degs.sort()
+    return degs
+
+
+def get_out_degree_centrality(
+    dg: Digraph, u: Hashable, normalized: bool = True
+) -> float:
+    """Return the normalized (divided by number_of_nodes - 1) degree centrality of node u in graph g."""
+    deg = dg.get_out_degree(u)
+    if normalized:
+        deg = deg / (len(dg) - 1)
+    return deg
+
+
+# TODO test this
+def get_sorted_out_degree_centralities(dg: Digraph, normalized: bool = True) -> float:
+    degs = [get_out_degree_centrality(dg, u, normalized=normalized) for u in dg]
+    degs.sort()
+    return degs
