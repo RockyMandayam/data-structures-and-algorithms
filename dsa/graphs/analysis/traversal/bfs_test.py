@@ -401,7 +401,7 @@ def test_bfs(use_approach_1: bool) -> None:
     assert contains_cycle
 
     # cycles
-    g = GraphFactory.create_circuit(4)
+    g = GraphFactory.create_cycle(4)
     # start at 0, neighbors in sorted order
     parents, dists, level, ccs, contains_cycle = bfs(
         g,

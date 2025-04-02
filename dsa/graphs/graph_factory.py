@@ -17,7 +17,6 @@ class GraphFactory:
         nodes: 0,1,2,3,4,5,6,7 where 0,1,2 are from dsa.graphs[0] and 3,4,5,6,7 are from dsa.graphs[1]
         edges: (0,1),(0,2),(1,2) from dsa.graphs[0] and (3,4),(4,5),(5,6),(6,7) from dsa.graphs[1]
         """
-        # concat_nodes = []
         num_nodes = 0
         edges = []
         for g in graphs:
@@ -148,7 +147,7 @@ class GraphFactory:
         return Graph(nodes=nodes, edges=edges)
 
     @staticmethod
-    def create_circuit(n: int) -> Graph:
+    def create_cycle(n: int) -> Graph:
         """Creates a circuit (cycle) of n nodes.
 
         n must be at least 3, since to create a valid circuit (closed walk that does not repeat edges),

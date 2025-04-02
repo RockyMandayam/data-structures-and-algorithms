@@ -240,19 +240,19 @@ class TestGraphFactory:
         assert g.num_edges() == 7
         assert g.are_edges(((0, 1), (0, 2), (1, 2), (1, 3), (2, 3), (2, 4), (3, 4)))
 
-    def test_create_circuit(self) -> None:
+    def test_create_cycle(self) -> None:
         # invalid graphs
         with pytest.raises(ValueError):
-            GraphFactory.create_circuit(-1)
+            GraphFactory.create_cycle(-1)
         with pytest.raises(ValueError):
-            GraphFactory.create_circuit(0)
+            GraphFactory.create_cycle(0)
         with pytest.raises(ValueError):
-            GraphFactory.create_circuit(1)
+            GraphFactory.create_cycle(1)
         with pytest.raises(ValueError):
-            GraphFactory.create_circuit(2)
+            GraphFactory.create_cycle(2)
 
         # 3 nodes
-        g = GraphFactory.create_circuit(3)
+        g = GraphFactory.create_cycle(3)
         assert len(g) == 3
         assert g.num_edges() == 3
         assert g.are_edges(((0, 1), (1, 2), (2, 0)))
