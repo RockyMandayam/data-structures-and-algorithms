@@ -8,6 +8,7 @@ from dsa.graphs.graph import Graph
 
 
 def is_connected(g: Graph) -> bool:
+    """Returns if the graph is connected. NOTE: only for undirected graphs."""
     return len(get_connected_components(g)) == 1
 
 
@@ -15,6 +16,8 @@ def get_connected_components(
     g: Graph, traversal_type: TraversalType = TraversalType.DFS
 ) -> list[list[Hashable]]:
     """Gets connected components in graph g
+
+    NOTE: only for undirected graphs.
 
     Args:
         g: Graph
