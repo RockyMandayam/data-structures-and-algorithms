@@ -74,7 +74,7 @@ def test_get_eigenvector_centralities() -> None:
     )
 
 
-def test_get_in_degree() -> None:
+def test_get_in_degree_centrality() -> None:
     dg = Digraph(nodes=4)
     for u in range(4):
         assert get_in_degree_centrality(dg, u, normalized=False) == 0
@@ -93,7 +93,7 @@ def test_get_in_degree() -> None:
         assert get_in_degree_centrality(dg, u, normalized=True) == pytest.approx(1)
 
 
-def test_get_out_degree() -> None:
+def test_get_out_degree_centrality() -> None:
     dg = Digraph(nodes=4)
     for u in range(4):
         assert get_out_degree_centrality(dg, u, normalized=False) == 0
