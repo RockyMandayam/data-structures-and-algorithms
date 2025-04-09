@@ -228,9 +228,10 @@ class Graph:
 
         Since nodes are not allowed to be None, None is used to request for all edges in the graph.
         """
-        if node is None:
-            return self._edges
-        return self._incident_edges[node]
+        edges = self._edges
+        if node is not None:
+            edges = {edge: edges[edge] for edge in self._incident_edges[node]}
+        return edges
 
     def _get_canonical_edge(
         self, edge: tuple[Hashable, Hashable]

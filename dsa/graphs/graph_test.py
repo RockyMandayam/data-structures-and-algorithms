@@ -91,6 +91,7 @@ class TestGraph:
         assert len(g) == 0
         assert g.num_edges() == 0
         assert len(g.get_nodes()) == 0
+        assert len(g.get_edges()) == 0
         with pytest.raises(ValueError):
             g.is_edge((0, 1))
         with pytest.raises(ValueError):
@@ -141,6 +142,7 @@ class TestGraph:
         assert g.num_edges() == 0
         assert not g.is_edge((1, 1))
         assert not g.are_edges([(1, 1)])
+        assert len(g.get_edges()) == 0
         # note special case of singular 'node' (not 'nodes') for 1 node
         assert str(g) == f"Graph '' with 1 node and 0 edges"
         self._test_iter(g, 1)
@@ -224,6 +226,7 @@ class TestGraph:
         assert g.are_edges([(1, 2), (2, 1)])
         assert g.are_edges([(1, 2), (2, 1), (1, 2)])
         assert not g.are_edges([(1, 2), (1, 1)])
+        assert g.get_edges() == {(1, 2): (1, {})}
         # note special case of singular 'edge' (not 'edges') for 1 edge
         assert str(g) == f"Graph '' with 2 nodes and 1 edge"
         self._test_iter(g, 2)
