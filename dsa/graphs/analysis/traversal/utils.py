@@ -1,15 +1,17 @@
-from collections.abc import Hashable, Sequence
+from collections.abc import Callable, Hashable, Sequence
 
 from dsa.graphs.analysis.traversal.order import Order
 from dsa.graphs.graph import Graph
 
 
 def get_ordered_neighbors(
-    g: Graph, u: Hashable, neighbor_order: Order | None
+    g: Graph, u: Hashable, neighbor_order: Order | Callable[[Hashable], int] | None
 ) -> list[Hashable]:
     vs = [v for v in g[u]]
-    if neighbor_order:
+    if isinstance(neighbor_order, Order):
         vs.sort(reverse=(neighbor_order == Order.REVERSE_SORTED))
+    elif isinstance(neighbor_order, Callable):
+        vs.sort(key=neighbor_order)
     return vs
 
 

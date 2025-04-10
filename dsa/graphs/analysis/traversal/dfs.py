@@ -15,7 +15,8 @@ def dfs(
     *,
     recursive: bool = False,
     seed_order: Order | Hashable | Sequence[Hashable] | None = None,
-    neighbor_order: Order | None = Order.SORTED,
+    # TODO test Callable neighbor_order
+    neighbor_order: Order | Callable[[Hashable], int] | None = Order.SORTED,
 ) -> tuple[
     dict[Hashable, Hashable],
     dict[Hashable, float],
@@ -37,7 +38,7 @@ def dfs(
             - If non-Sequence Hashable, first start with the given Hashable (node); rest of order is undetermined
             - If Sequence[Hashable] (sequence of nodes), iterate in the order given by the sequence.
             - NOTE: If seed_order is Hashable and also Sequence[Hashable], it'll be interpreted as Hashable (node)
-        neighbor_order: optional order in which to explore neighbors of a node; if not provided, undetermined order.
+        neighbor_order: optional order in which to explore neighbors of a node; or comparison Callable; if None, undetermined order.
 
     Returns:
         dict[Hashable, Hashable]: path parents map, a map from each node to its parent in the DFS tree,
@@ -50,7 +51,6 @@ def dfs(
         bool: True if graph contains cycle; False otherwise
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
-
     parents = {}
     dists = {}
     reached = set()
@@ -92,7 +92,7 @@ def dfs(
 def dfs_from(
     g: Graph,
     u: Hashable,
-    neighbor_order: Order | None,
+    neighbor_order: Order | Callable[[Hashable], int] | None,
     reached: set | None = None,
     recursive: bool = False,
 ) -> tuple[
@@ -111,7 +111,7 @@ def dfs_from(
 def _dfs_from_recursive(
     g: Graph,
     u: Hashable,
-    neighbor_order: Order | None,
+    neighbor_order: Order | Callable[[Hashable], int] | None,
     reached: set,
     *,
     parent: Hashable = None,  # only set to non-None when called recursively
@@ -181,7 +181,7 @@ def _dfs_from_recursive(
 def _dfs_from_iterative(
     g: Graph,
     u: Hashable,
-    neighbor_order: Order | None,
+    neighbor_order: Order | Callable[[Hashable], int] | None,
     reached: set,
 ) -> tuple[
     dict[Hashable, Hashable],
