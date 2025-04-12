@@ -4,16 +4,17 @@ import pytest
 
 from dsa.graphs.analysis.traversal.dfs import dfs
 from dsa.graphs.analysis.traversal.order import Order
+from dsa.graphs.digraph import Digraph
+from dsa.graphs.digraph_factory import DigraphFactory
 from dsa.graphs.graph import Graph
 from dsa.graphs.graph_factory import GraphFactory
-from dsa.graphs.digraph import Digraph
 
 # TODO why is this so slow with 2**big_number
 MAX_TEST_GRAPH_SIZE = 2**8
 
 
 @pytest.mark.parametrize("recursive", (True, False))
-def test_dfs(recursive: bool) -> None:
+def test_dfs_undirected(recursive: bool) -> None:
     # non-comparable nodes
     g = Graph(nodes=(12, "blah"), edges=((12, "blah"),))
     with pytest.raises(TypeError):
@@ -1098,6 +1099,9 @@ def test_dfs(recursive: bool) -> None:
     assert ccs == exp_ccs
     assert undirected_contains_cycle
 
+
+@pytest.mark.parametrize("recursive", (True, False))
+def test_dfs_undirected(recursive: bool) -> None:
     dg = Digraph(nodes=3, edges=((0, 1), (0, 2), (1, 2)))
     (
         parents,
@@ -1141,5 +1145,25 @@ def test_dfs(recursive: bool) -> None:
     assert post == [2, 1, 0]
     assert ccs == [[0, 1, 2]]
     assert directed_contains_cycle
-    
 
+    dg = DigraphFactory.create_complete_digraph(4)
+    (
+        parents,
+        dists,
+        pre,
+        post,
+        ccs,
+        undirected_contains_cycle,
+        directed_contains_cycle,
+    ) = dfs(
+        dg,
+        recursive=recursive,
+        seed_order=Order.REVERSE_SORTED,
+        neighbor_order=Order.REVERSE_SORTED,
+    )
+    assert parents == {3: None, 2: 3, 1: 2, 0: 1}
+    assert dists == {3: 0, 2: 1, 1: 2, 0: 3}
+    assert pre == [3, 2, 1, 0]
+    assert post == [0, 1, 2, 3]
+    assert ccs == [[3, 2, 1, 0]]
+    assert directed_contains_cycle
