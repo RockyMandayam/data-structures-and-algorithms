@@ -36,12 +36,12 @@ def dijkstra(
         neighbor_order: optional order in which to explore neighbors of a node; if not provided, undetermined order.
 
     Returns:
-        list[Hashable]: distance order of nodes in the Dijkstra traversal
         dict[Hashable, float]: map from node to the distance from its seed to the node
         dict[Hashable, Hashable]: parents dict which encodes the traversal tree
+        list[Hashable]: distance order of nodes in the Dijkstra traversal
         list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes, with the same order
             as the distance order of the Dijkstra traversal.
-        bool: True if graph contains cycle; False otherwise
+        bool: if graph is undirected, True if graph contains cycle; False otherwise
     """
     for edge in g.get_edges():
         if g.get_weight(edge) < 0:
@@ -55,14 +55,14 @@ def dijkstra(
     reached = set()
     distorder = []
     ccs = []
-    contains_cycle = False
+    undirected_contains_cycle = False
     for u in seed_nodes:
         if u not in reached:
             (
                 parents_from_u,
                 dists_from_u,
                 distorder_from_u,
-                contains_cycle_from_u,
+                undirected_contains_cycle_from_u,
             ) = dijkstra_from(
                 g, u, neighbor_order, reached, use_approach_1=use_approach_1
             )
@@ -70,8 +70,10 @@ def dijkstra(
             dists.update(dists_from_u)
             distorder.extend(distorder_from_u)
             ccs.append(distorder_from_u)
-            contains_cycle = contains_cycle or contains_cycle_from_u
-    return parents, dists, distorder, ccs, contains_cycle
+            undirected_contains_cycle = (
+                undirected_contains_cycle or undirected_contains_cycle_from_u
+            )
+    return parents, dists, distorder, ccs, undirected_contains_cycle
 
 
 # TODO test this separately
@@ -81,7 +83,7 @@ def dijkstra_from(
     neighbor_order: Order | None,
     reached: set | None = None,
     use_approach_1: bool = True,
-) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable], bool]:
+) -> tuple[dict[Hashable, Hashable], dict[Hashable, float], list[Hashable], bool]:
     _dijkstra_from: Callable = (
         _dijkstra_from_approach_1 if use_approach_1 else _dijkstra_from_approach_2
     )
@@ -95,7 +97,7 @@ def _dijkstra_from_approach_1(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable], bool]:
+) -> tuple[dict[Hashable, Hashable], dict[Hashable, float], list[Hashable], bool]:
     """Same as the iterative BFS implementation, except use a priority queue instead of a queue
     AND only update parents if a node isn't already in it.
 
@@ -119,7 +121,7 @@ def _dijkstra_from_approach_1(
     heapq.heapify(to_explore)
     pq_entry_count += 1
     distorder = []
-    contains_cycle = False
+    undirected_contains_cycle = False
     while to_explore:
         _, _, u = heapq.heappop(to_explore)
         # if I used a update_priority on the priority queue, I wouldn't need to do this, since nodes would never get
@@ -132,13 +134,13 @@ def _dijkstra_from_approach_1(
         for v in get_ordered_neighbors(g, u, neighbor_order):
             w = g.get_weight((u, v))
             if v in parents:
-                contains_cycle = contains_cycle or v != parents[u]
+                undirected_contains_cycle = undirected_contains_cycle or v != parents[u]
             if v not in parents or dists[v] > dists[u] + w:
                 parents[v] = u
                 dists[v] = dists[u] + w
                 heapq.heappush(to_explore, (dists[v], pq_entry_count, v))
                 pq_entry_count += 1
-    return parents, dists, distorder, contains_cycle
+    return parents, dists, distorder, undirected_contains_cycle
 
 
 def _dijkstra_from_approach_2(
@@ -146,7 +148,7 @@ def _dijkstra_from_approach_2(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable], bool]:
+) -> tuple[dict[Hashable, Hashable], dict[Hashable, float], list[Hashable], bool]:
     """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
     use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
     AND only update parents if a node isn't already in it.
@@ -164,7 +166,7 @@ def _dijkstra_from_approach_2(
     pq_entry_count += 1
     distorder = []
     reached.add(u)
-    contains_cycle = False
+    undirected_contains_cycle = False
     actually_reached = (
         set()
     )  # only needed b/c priority queue doesn't have update priority feature
@@ -180,11 +182,11 @@ def _dijkstra_from_approach_2(
         for v in get_ordered_neighbors(g, u, neighbor_order):
             w = g.get_weight((u, v))
             if v in reached:
-                contains_cycle = contains_cycle or v != parents[u]
+                undirected_contains_cycle = undirected_contains_cycle or v != parents[u]
             if v not in reached or dists[v] > dists[u] + w:
                 parents[v] = u
                 dists[v] = dists[u] + w
                 heapq.heappush(to_explore, (dists[v], pq_entry_count, v))
                 pq_entry_count += 1
                 reached.add(v)
-    return parents, dists, distorder, contains_cycle
+    return parents, dists, distorder, undirected_contains_cycle
