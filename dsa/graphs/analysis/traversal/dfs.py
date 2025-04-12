@@ -139,7 +139,7 @@ def _dfs_from_recursive(
     dict[Hashable, Hashable],
     dict[Hashable, float],
     list[Hashable],
-    dict[Hashable, Hashable],
+    list[Hashable],
     bool,
     bool,
 ]:
@@ -226,7 +226,8 @@ def _dfs_from_iterative(
     dict[Hashable, Hashable],
     dict[Hashable, float],
     list[Hashable],
-    dict[Hashable, Hashable],
+    list[Hashable],
+    bool,
     bool,
 ]:
     """Iterative implementation of DFS node exploration.
