@@ -37,12 +37,12 @@ def bfs(
         neighbor_order: optional order in which to explore neighbors of a node; if not provided, undetermined order.
 
     Returns:
-        list[Hashable]: level order of nodes in the BFS traversal
         dict[Hashable, float]: map from node to the distance from its seed to the node
         dict[Hashable, Hashable]: parents dict which encodes the traversal tree
+        list[Hashable]: level order of nodes in the BFS traversal
         list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes, with the same order
             as the level order of the BFS traversal.
-        bool: True if graph contains cycle; False otherwise
+        bool: if the graph is undirected, True if graph contains cycle; False otherwise
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
 
@@ -51,21 +51,23 @@ def bfs(
     reached = set()
     levelorder = []
     ccs = []
-    contains_cycle = False
+    undirected_contains_cycle = False
     for u in seed_nodes:
         if u not in reached:
             (
                 parents_from_u,
                 dists_from_u,
                 levelorder_from_u,
-                contains_cycle_from_u,
+                undirected_contains_cycle_from_u,
             ) = bfs_from(g, u, neighbor_order, reached, use_approach_1=use_approach_1)
             parents.update(parents_from_u)
             dists.update(dists_from_u)
             levelorder.extend(levelorder_from_u)
             ccs.append(levelorder_from_u)
-            contains_cycle = contains_cycle or contains_cycle_from_u
-    return parents, dists, levelorder, ccs, contains_cycle
+            undirected_contains_cycle = (
+                undirected_contains_cycle or undirected_contains_cycle_from_u
+            )
+    return parents, dists, levelorder, ccs, undirected_contains_cycle
 
 
 # TODO test this separately
@@ -75,7 +77,7 @@ def bfs_from(
     neighbor_order: Order | None,
     reached: set | None = None,
     use_approach_1: bool = True,
-) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable], bool]:
+) -> tuple[dict[Hashable, Hashable], dict[Hashable, float], list[Hashable], bool]:
     _bfs_from: Callable = (
         _bfs_from_approach_1 if use_approach_1 else _bfs_from_approach_2
     )
@@ -110,7 +112,7 @@ def _bfs_from_approach_1(
     dists = {u: 0}
     to_explore = [u]
     levelorder = []
-    contains_cycle = False
+    undirected_contains_cycle = False
     while to_explore:
         u = to_explore.pop(0)
         # don't need to do "continue if u in reached" since a node never gets added twice to the queue
@@ -122,8 +124,8 @@ def _bfs_from_approach_1(
                 dists[v] = dists[u] + 1
                 to_explore.append(v)
             else:
-                contains_cycle = contains_cycle or v != parents[u]
-    return parents, dists, levelorder, contains_cycle
+                undirected_contains_cycle = undirected_contains_cycle or v != parents[u]
+    return parents, dists, levelorder, undirected_contains_cycle
 
 
 def _bfs_from_approach_2(
@@ -131,7 +133,7 @@ def _bfs_from_approach_2(
     u: Hashable,
     neighbor_order: Order | None,
     reached: set,
-) -> tuple[list[Hashable], dict[Hashable, float], list[Hashable], bool]:
+) -> tuple[dict[Hashable, Hashable], dict[Hashable, float], list[Hashable], bool]:
     """Same as the iterative DFS implementation without the "hack" added to get the postorder, except
     use a queue instead of a stack (well, use a list in both cases, but do pop(0) instead of pop(-1) here),
     AND only update parents if a node isn't already in it.
@@ -146,7 +148,7 @@ def _bfs_from_approach_2(
     to_explore = [u]
     levelorder = []
     reached.add(u)
-    contains_cycle = False
+    undirected_contains_cycle = False
     while to_explore:
         u = to_explore.pop(0)
         levelorder.append(u)
@@ -157,5 +159,5 @@ def _bfs_from_approach_2(
                 to_explore.append(v)
                 reached.add(v)
             else:
-                contains_cycle = contains_cycle or v != parents[u]
-    return parents, dists, levelorder, contains_cycle
+                undirected_contains_cycle = undirected_contains_cycle or v != parents[u]
+    return parents, dists, levelorder, undirected_contains_cycle
