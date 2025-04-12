@@ -30,7 +30,7 @@ def get_connected_components(
         list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes
     """
     if traversal_type == TraversalType.DFS:
-        *_, ccs, _ = dfs(g)
+        *_, ccs, _, _ = dfs(g)
     elif traversal_type == TraversalType.BFS:
         *_, ccs, _ = bfs(g)
     elif traversal_type == TraversalType.DIJKSTRA:
@@ -50,7 +50,7 @@ def get_strongly_connected_components(dg: Digraph) -> list[list[Hashable]]:
     sink_to_src_order = postorder[::-1]
     # now I need to call DFS, with seed order and neighbor order determiend by sink_to_src_order
     node_to_index = get_key_to_index(sink_to_src_order)
-    *_, ccs, _ = dfs(
+    *_, ccs, _, _ = dfs(
         dg, seed_order=sink_to_src_order, neighbor_order=lambda u: node_to_index[u]
     )
     return ccs

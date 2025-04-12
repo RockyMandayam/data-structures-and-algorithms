@@ -24,6 +24,7 @@ def dfs(
     list[Hashable],
     list[list[Hashable]],
     bool,
+    bool,
 ]:
     """Depth first search (DFS) implementation.
 
@@ -48,7 +49,8 @@ def dfs(
         list[Hashable]: postorder corresponding to the same traversal
         list[list[Hashable]]: List of connected components (CC), where each CC is a list of nodes, with the same order
             as the preorder of the DFS traversal.
-        bool: True if graph contains cycle; False otherwise
+        bool: if this is an undirected graph, True if the graph contains a cycle; False otherwise
+        bool: if this is a directed graph, True if the graph contains a cycle; False otherwise
     """
     seed_nodes = get_ordered_seed_nodes(g, seed_order)
     parents = {}
@@ -57,7 +59,8 @@ def dfs(
     preorder = []
     postorder = []
     ccs = []
-    contains_cycle = False
+    undirected_contains_cycle = False
+    directed_contains_cycle = False
     for u in seed_nodes:
         if u not in reached:
             # won't do the same for reached_from_u. Why? Well, for directed graphs, there are times when a node
@@ -71,7 +74,8 @@ def dfs(
                 dists_from_u,
                 preorder_from_u,
                 postorder_from_u,
-                contains_cycle_from_u,
+                undirected_contains_cycle_from_u,
+                directed_contains_cycle_from_u,
             ) = dfs_from(
                 g,
                 u,
@@ -84,8 +88,21 @@ def dfs(
             preorder.extend(preorder_from_u)
             postorder.extend(postorder_from_u)
             ccs.append(preorder_from_u)  # could use postorder or keys of parents also
-            contains_cycle = contains_cycle or contains_cycle_from_u
-    return parents, dists, preorder, postorder, ccs, contains_cycle
+            undirected_contains_cycle = (
+                undirected_contains_cycle or undirected_contains_cycle_from_u
+            )
+            directed_contains_cycle = (
+                directed_contains_cycle or directed_contains_cycle_from_u
+            )
+    return (
+        parents,
+        dists,
+        preorder,
+        postorder,
+        ccs,
+        undirected_contains_cycle,
+        directed_contains_cycle,
+    )
 
 
 # TODO test this separately
@@ -100,6 +117,7 @@ def dfs_from(
     dict[Hashable, float],
     list[Hashable],
     dict[Hashable, Hashable],
+    bool,
     bool,
 ]:
     _dfs_from: Callable = _dfs_from_recursive if recursive else _dfs_from_iterative
@@ -116,11 +134,13 @@ def _dfs_from_recursive(
     *,
     parent: Hashable = None,  # only set to non-None when called recursively
     dists: dict | None = None,  # only set to non-None when called recursively
+    double_reached: set | None = None,  # only set to non-None when called recursively
 ) -> tuple[
     dict[Hashable, Hashable],
     dict[Hashable, float],
     list[Hashable],
     dict[Hashable, Hashable],
+    bool,
     bool,
 ]:
     """Recursive exploration
@@ -147,7 +167,10 @@ def _dfs_from_recursive(
     reached.add(u)
     preorder = [u]
     postorder = []
-    contains_cycle = False
+    undirected_contains_cycle = False
+    directed_contains_cycle = False
+    if double_reached is None:
+        double_reached = set()
     for v in get_ordered_neighbors(g, u, neighbor_order):
         if v not in reached:
             (
@@ -155,7 +178,8 @@ def _dfs_from_recursive(
                 dists_from_v,
                 preorder_from_v,
                 postorder_from_v,
-                contains_cycle_from_v,
+                undirected_contains_cycle_from_v,
+                directed_contains_cycle_from_v,
             ) = _dfs_from_recursive(
                 g,
                 v,
@@ -163,19 +187,34 @@ def _dfs_from_recursive(
                 reached,
                 parent=u,
                 dists=dists,
+                double_reached=double_reached,
             )
             parents.update(parents_from_v)
             preorder.extend(preorder_from_v)
             postorder.extend(postorder_from_v)
-            contains_cycle = contains_cycle or contains_cycle_from_v
+            undirected_contains_cycle = (
+                undirected_contains_cycle or undirected_contains_cycle_from_v
+            )
+            directed_contains_cycle = (
+                directed_contains_cycle or directed_contains_cycle_from_v
+            )
         else:
             # intuitively, we'd want to check if the neighbor is in parents, not in reached
             # but since recursive DFS is "greedy" and literally recurses depth first, it'll
             # always keep recursing, so the cycle-causing node (initial/final node) would
             # actually be in reached as well.
-            contains_cycle = contains_cycle or (v != parents[u])
+            undirected_contains_cycle = undirected_contains_cycle or (v != parents[u])
+            directed_contains_cycle = directed_contains_cycle or v not in double_reached
     postorder.append(u)
-    return parents, dists, preorder, postorder, contains_cycle
+    double_reached.add(u)
+    return (
+        parents,
+        dists,
+        preorder,
+        postorder,
+        undirected_contains_cycle,
+        directed_contains_cycle,
+    )
 
 
 def _dfs_from_iterative(
@@ -250,29 +289,29 @@ def _dfs_from_iterative(
                         only occurs at the last addition, and when you get to the earlier additions, the corresponding visited element will
                         be False, and you won't know that it's already been processed. So you should use a visited set that keeps track of
                         all visited nodes.
-                    - You have to use a double_visited set. Why? For the same reason. There are cycles, so a node can be added multiple times
+                    - You have to use a double_reached set. Why? For the same reason. There are cycles, so a node can be added multiple times
                         to the stack. It gets added the first time, and then perhaps times after that, all the while node is not in visited.
                         Then, it gets popped up, and you see it's not in visited. So you mark it as visited, and re-add it to the stack, and
                         add all its children. Then the next time you see this node, it's already visited, so you add it to the postorder. So
                         far, so good. BUT. Remember how it was initially added potentially multiple times? So if you keep popping off the
                         stack, you may eventually pop off that node AGAIN. Now, you don't want to add to postorder since that'll be double
                         counting! You could of course just check if node in postorder, BUT that's slow (O(N) each time), so instead it's
-                        better to keep a double_visited set. Now, the second time you see the node, i.e., the first time you see it after
-                        it's been visited already, i.e., when you add it to postorder,  you also add it to double_visited. Then, for all
-                        future times, you check if it's in double_visited, and if it is (which it will be), don't add it to post_order. Think
-                        this is awkward since we have a double_visited set and postorder list which track exactly the same nodes? Sure. But
+                        better to keep a double_reached set. Now, the second time you see the node, i.e., the first time you see it after
+                        it's been visited already, i.e., when you add it to postorder,  you also add it to double_reached. Then, for all
+                        future times, you check if it's in double_reached, and if it is (which it will be), don't add it to post_order. Think
+                        this is awkward since we have a double_reached set and postorder list which track exactly the same nodes? Sure. But
                         also, that's exactly also true of the visited set and the preorder list (they track the same nodes). One is good for
                         instant lookup and one is good for returning an order
                     - Minor implementation detail: I think you could use a visited_count dict that counts whether it's been visited 0, 1, or 2
                         times, instead of two sets. Idk if it's easier/more elegant or less so... just a thought.
                     - Another minor implementation detail is you can do a peek followed by a pop sometimes instead of a pop followed by a
                         re-append sometimes.
-                    - There's also a way to not use a double_visited list but instead, when a node is already reached, just check whether all
-                        its neighbors are already reached. But, of course, this is just slower. double_visited just makes this check constant
+                    - There's also a way to not use a double_reached list but instead, when a node is already reached, just check whether all
+                        its neighbors are already reached. But, of course, this is just slower. double_reached just makes this check constant
                         time basically.
-            - the double_visited set is only used for the iterative DFS implementation, not the recursive DFS impilementation. So do we create
-                a double_visited set up in the DFS function and only pass it in to the iterative version and not the recursive version? Well,
-                no. double_visited is used to differentiate reached from reached twice among a node and all its descendents in the DFS tree.
+            - the double_reached set is only used for the iterative DFS implementation, not the recursive DFS impilementation. So do we create
+                a double_reached set up in the DFS function and only pass it in to the iterative version and not the recursive version? Well,
+                no. double_reached is used to differentiate reached from reached twice among a node and all its descendents in the DFS tree.
                 Note that _dfs_from_iterative won't be called on an already reached node. It'll only be called on an unreached node. However,
                 with directed graphs, it's possible that a descendent of the start node of _dfs_from_iterative is in fact already reached.
                 But in that case, that descendent will have also already been double_reached. By the end of a _dfs_from_iterative call, any
@@ -287,7 +326,8 @@ def _dfs_from_iterative(
     double_reached = set()
     preorder = []
     postorder = []
-    contains_cycle = False
+    undirected_contains_cycle = False
+    directed_contains_cycle = False
     while to_explore:
         u = to_explore.pop(-1)
         if u in reached:
@@ -296,7 +336,9 @@ def _dfs_from_iterative(
                 double_reached.add(u)
                 postorder.append(u)
             continue
-        to_explore.append(u)  # this is only used for postorder
+        to_explore.append(
+            u
+        )  # this is only used for postorder and directed_contains_cycle
         reached.add(u)
         preorder.append(u)
         # add to stack in reverse order of order of exploration
@@ -309,5 +351,15 @@ def _dfs_from_iterative(
                 dists[v] = dists[u] + 1
                 to_explore.append(v)
             else:
-                contains_cycle = contains_cycle or v != parents[u]
-    return parents, dists, preorder, postorder, contains_cycle
+                undirected_contains_cycle = undirected_contains_cycle or v != parents[u]
+                directed_contains_cycle = (
+                    directed_contains_cycle or v not in double_reached
+                )
+    return (
+        parents,
+        dists,
+        preorder,
+        postorder,
+        undirected_contains_cycle,
+        directed_contains_cycle,
+    )

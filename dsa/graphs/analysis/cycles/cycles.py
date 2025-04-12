@@ -24,7 +24,7 @@ def _contains_cycle_using_graph_traversal(
     g: Graph, traversal_type: TraversalType
 ) -> bool:
     if traversal_type == TraversalType.DFS:
-        *_, contains_cycle = dfs(g)
+        *_, contains_cycle, _ = dfs(g)
     elif traversal_type == TraversalType.BFS:
         *_, contains_cycle = bfs(g)
     elif traversal_type == TraversalType.DIJKSTRA:
