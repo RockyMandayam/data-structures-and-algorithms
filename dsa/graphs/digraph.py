@@ -79,6 +79,13 @@ class Digraph(Graph):
         self._out_edges[u].add((u, v))
         self._in_edges[v].add((u, v))
 
+    def remove_edge(self, edge: tuple[Hashable, Hashable]) -> None:
+        """Removes edge if present; errors if not present"""
+        super().remove_edge(edge)
+        u, v = edge
+        self._out_edges[u].remove((u, v))
+        self._in_edges[v].remove((u, v))
+
     def get_out_degree(self, u: Hashable) -> int:
         self._validate_node(u)
         return len(self._out_edges[u])

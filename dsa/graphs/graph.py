@@ -290,6 +290,23 @@ class Graph:
         for edge in edges:
             self.add_edge(edge)
 
+    def remove_edge(self, edge: tuple[Hashable, Hashable]) -> None:
+        """Removes edge if present; errors if not present"""
+        u, v = edge
+        self._validate_node(u)
+        self._validate_node(v)
+        if not self.is_edge(edge):
+            raise ValueError(f"Edge ({u}, {v}) does not exist.")
+        edge = self._get_canonical_edge(edge)
+        del self._edges[edge]
+        self._incident_edges[u].remove(edge)
+        self._incident_edges[v].remove(edge)
+
+    # TODO test
+    def remove_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> None:
+        for edge in edges:
+            self.add_edge(edge)
+
     def set_weight(self, edge: tuple[Hashable, Hashable], weight: float) -> None:
         if not math.isfinite(weight):
             raise ValueError(f"Invalid {weight=}")

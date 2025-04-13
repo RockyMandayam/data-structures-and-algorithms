@@ -351,6 +351,29 @@ class TestGraph:
         assert g.is_edge((1, 0))
         assert g.is_edge((2, 0))
 
+    def test_remove_edge(self) -> None:
+        g = Graph(nodes=3, edges=((2, 0),))
+        assert len(g) == 3
+        assert g.num_edges() == 1
+        with pytest.raises(ValueError):
+            g.remove_edge((2, 1))
+        g.remove_edge((0, 2))
+        assert g.num_edges() == 0
+        for u in range(3):
+            assert g.get_degree(u) == 0
+            for v in range(3):
+                assert not g.is_edge((u, v))
+                assert not g.is_edge((v, u))
+        # test that it works with add_edge
+        g.add_edge((0, 2))
+        assert g.num_edges() == 1
+        for u in range(3):
+            for v in range(3):
+                if (u, v) in ((0, 2), (2, 0)):
+                    assert g.is_edge((u, v))
+                else:
+                    assert not g.is_edge((u, v))
+
     def test_A(self) -> None:
         # TODO test node_order
         g = Graph(3)
