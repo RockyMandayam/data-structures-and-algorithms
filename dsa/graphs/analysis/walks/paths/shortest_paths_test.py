@@ -1,6 +1,6 @@
 import pytest
 
-from dsa.graphs.analysis.paths.shortest_paths import get_shortest_paths
+from dsa.graphs.analysis.walks.paths.shortest_paths import get_shortest_paths
 from dsa.graphs.graph import Graph
 
 
