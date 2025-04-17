@@ -1,5 +1,6 @@
 import random
 
+import numpy as np
 import pytest
 
 from dsa.graphs.graph import Graph
@@ -7,6 +8,53 @@ from dsa.graphs.graph_factory import GraphFactory
 
 
 class TestGraphFactory:
+    def test_from_A(self) -> None:
+        assert len(GraphFactory.from_A([])) == 0
+        # non-square matrices
+        with pytest.raises(ValueError):
+            GraphFactory.from_A([[]])
+        with pytest.raises(ValueError):
+            GraphFactory.from_A([[1, 2]])
+        with pytest.raises(ValueError):
+            GraphFactory.from_A(np.zeros((2, 5)).tolist())
+        # non-symmetric matrices
+        with pytest.raises(ValueError):
+            GraphFactory.from_A(np.diag(np.ones(3), k=1).tolist())
+        # self-loops
+        with pytest.raises(ValueError):
+            GraphFactory.from_A([[1]])
+        A = [
+            [
+                0,
+                1,
+                1,
+                0,
+            ],
+            [
+                1,
+                0,
+                0,
+                0,
+            ],
+            [
+                1,
+                0,
+                0,
+                1,
+            ],
+            [
+                0,
+                0,
+                1,
+                0,
+            ],
+        ]
+        g = GraphFactory.from_A(A)
+        assert len(g) == 4
+        assert g.num_edges() == 3
+        for u, v in ((0, 1), (0, 2), (2, 3)):
+            assert g.is_edge((u, v)) and g.is_edge((v, u))
+
     def test_concat_int_graphs(self) -> None:
         # two empty graphs
         g = Graph()

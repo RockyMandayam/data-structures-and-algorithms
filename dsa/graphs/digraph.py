@@ -22,12 +22,14 @@ class Digraph(Graph):
     def __init__(
         self,
         nodes: Mapping[Hashable, Mapping] | Iterable[Hashable] | int | None = None,
-        edges: Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]]
-        | Mapping[tuple[Hashable, Hashable], Mapping]
-        | Mapping[tuple[Hashable, Hashable], float]
-        | Sequence[tuple[tuple[Hashable, Hashable], float]]
-        | Sequence[tuple[Hashable, Hashable]]
-        | None = None,
+        edges: (
+            Mapping[tuple[Hashable, Hashable], tuple[float, Mapping]]
+            | Mapping[tuple[Hashable, Hashable], Mapping]
+            | Mapping[tuple[Hashable, Hashable], float]
+            | Sequence[tuple[tuple[Hashable, Hashable], float]]
+            | Sequence[tuple[Hashable, Hashable]]
+            | None
+        ) = None,
         name: str | None = None,
         skip_duplicate_edges: bool = False,
     ) -> None:

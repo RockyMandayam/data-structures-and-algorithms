@@ -5,6 +5,24 @@ from dsa.graphs.graph import Graph
 
 class GraphFactory:
     @staticmethod
+    def from_A(A: list[list[int]]) -> Graph:
+        if not A:
+            return Graph()
+        n = len(A)
+        print(A)
+        print(A[0])
+        if n != len(A[0]):
+            raise ValueError("Adjacency matrix must be square.")
+        edges = []
+        for v in range(n):
+            for u in range(v, n):
+                if A[v][u] != A[u][v]:
+                    raise ValueError("Adjacency matrix must be symmetric.")
+                if A[v][u]:
+                    edges.append((u, v))
+        return Graph(nodes=n, edges=edges)
+
+    @staticmethod
     def concat_int_graphs(graphs: Iterable[Graph]) -> Graph:
         """Given graphs with non-negative int nodes, "concatenate" graphs to create a new graph which just includes all the given
         graphs put together but disconnected - since nodes will conflict, make them distinct by adding an offset
