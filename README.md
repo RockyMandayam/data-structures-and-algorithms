@@ -3,6 +3,7 @@
 Implementing data structures & algorithms to better my understanding. In particular, trying to implement them in ways that reveal the intuition and show similarities between the different algorithms.
 
 Functionalities implemented (often with option to specify the type of algorithm, e.g., using DFS vs BFS, or an entirely different underlying algorithm for cycle detection in a graph):
+
     - graphs (undirected and directed)
         - centrality:
             - node centrality:
@@ -23,6 +24,7 @@ Functionalities implemented (often with option to specify the type of algorithm,
         - topological sort: topologically sort a directed graph using DFS or BFS (Kahn's algorithm, not the normal BFS traversal)
 
 TO DO:
+    
     - connectedness:
         - find a bridge / all bridges
         - find an articulation point / all articulation points
