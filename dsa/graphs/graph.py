@@ -309,7 +309,7 @@ class Graph:
     # TODO test
     def remove_edges(self, edges: Iterable[tuple[Hashable, Hashable]]) -> None:
         for edge in edges:
-            self.add_edge(edge)
+            self.remove_edge(edge)
 
     def set_weight(self, edge: tuple[Hashable, Hashable], weight: float) -> None:
         if not math.isfinite(weight):
